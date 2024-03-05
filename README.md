@@ -1,5 +1,3 @@
-#Stateful POAP
-
 ## Setup
 
 Install dependencies:
