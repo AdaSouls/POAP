@@ -1,7 +1,9 @@
+#Stateful POAP
+
 ## Setup
 
 Install dependencies:
-    
+
     nvm use # Should install node 10.16.0
     npm install -g ganache-cli
     npm install
@@ -64,13 +66,15 @@ To create an instance we do:
 
     npz zos create MyContract --init initialize --args 42,hitchhiker
 
+### Contract addresses
 
-### Contract addresses ###
-#### Production ####
-* Mainnet: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://etherscan.io/address/0x22c1f6050e56d2876009903609a2cc3fef83b415)
-* xDAI: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://blockscout.com/poa/xdai/address/0x22c1f6050e56d2876009903609a2cc3fef83b415/transactions)
+#### Production
 
-#### Development ####
-* Rinkeby: []()
-* Sokol: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://blockscout.com/poa/sokol/address/0x22c1f6050e56d2876009903609a2cc3fef83b415/transactions)
-* Binance Smart Chain: [0xe310633E107e87F8Dfe50b00C360be60e926A1d6](https://testnet.bscscan.com/address/0xe310633e107e87f8dfe50b00c360be60e926a1d6)
+- Mainnet: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://etherscan.io/address/0x22c1f6050e56d2876009903609a2cc3fef83b415)
+- xDAI: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://blockscout.com/poa/xdai/address/0x22c1f6050e56d2876009903609a2cc3fef83b415/transactions)
+
+#### Development
+
+- Rinkeby: []()
+- Sokol: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://blockscout.com/poa/sokol/address/0x22c1f6050e56d2876009903609a2cc3fef83b415/transactions)
+- Binance Smart Chain: [0xe310633E107e87F8Dfe50b00C360be60e926A1d6](https://testnet.bscscan.com/address/0xe310633e107e87f8dfe50b00c360be60e926a1d6)
