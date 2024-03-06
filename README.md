@@ -31,5 +31,7 @@ To test our smart contracts we will use Hardhat and Mocha libraries.
 
 1. Install dependencies:
 
-    `nvm use 18.16.1`
-    `npm install`
+    ```
+    nvm use 18.16.1
+    npm install
+    ```
