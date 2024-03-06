@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@paima/evm-contracts/contracts/AnnotatedMintNft.sol";
 import "./PoapRoles.sol";
 import "./PoapPausable.sol";
 
@@ -18,21 +19,21 @@ import "./PoapPausable.sol";
 // - Pause contract (only admin)
 // - ERC721 full interface (base, metadata, enumerable)
 
-contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausable {
-    event EventToken(uint256 indexed eventId, uint256 tokenId);
+contract PoapStateful is Initializable, ERC721Enumerable, AnnotatedMintNft, PoapRoles, PoapPausable {
+    event EventToken(uint256 eventId, uint256 tokenId);
 
     // Base token URI
     string private ___baseURI;
 
     // Last Used id (used to generate new ids)
-    uint256 public lastId;
+    uint256 private lastId;
 
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
+    constructor(string memory name_, string memory symbol_, uint256 supply_, address owner_) AnnotatedMintNft(name_, symbol_, supply_, owner_) {}
 
     function initialize(string memory __baseURI, address[] memory admins)
     public initializer
@@ -46,6 +47,7 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
             _addAdmin(admins[i]);
         }
 
+        //setBaseURI(__baseURI);
         ___baseURI = __baseURI;
 
         // register the supported interfaces to conform to ERC721 via ERC165
@@ -57,32 +59,23 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
     }
 
     /*
-     * @dev Gets the token ID at a given index of the tokens list of the requested owner
-     * @param:owner address owning the tokens list to be accessed
-     * @param:index uint256 representing the index to be accessed of the requested tokens list
-     * @return:uint256 token ID at the given index of the tokens list owned by the requested address
+     ** @dev Gets the token ID at a given index of the tokens list of the requested owner
+     ** @param owner address owning the tokens list to be accessed
+     ** @param index uint256 representing the index to be accessed of the requested tokens list
+     ** @return uint256 token ID at the given index of the tokens list owned by the requested address
      */
     function tokenDetailsOfOwnerByIndex(address owner, uint256 index) public view returns (uint256 tokenId, uint256 eventId) {
         tokenId = tokenOfOwnerByIndex(owner, index);
         eventId = tokenEvent(tokenId);
     }
 
-    /*
+    /* 
      * @dev Gets the token uri
      * @return string representing the token uri
      */
-    function tokenURI(uint256 tokenId) override public view returns (string memory) {
+    function tokenURI(uint256 tokenId) override(AnnotatedMintNft, ERC721) public view returns (string memory) {
         uint eventId = _tokenEvent[tokenId];
         return _strConcat(___baseURI, _uint2str(eventId), "/", _uint2str(tokenId), "");
-    }
-
-    function setBaseURI(string memory baseURI) public onlyAdmin whenNotPaused {
-        ___baseURI = baseURI;
-    }
-
-    function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(lastId < newLastId);
-        lastId = newLastId;
     }
 
     function approve(address to, uint256 tokenId) override(ERC721, IERC721) public whenNotPaused {
@@ -109,6 +102,20 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
         lastId += 1;
         return _mintToken(eventId, lastId, to);
     }
+
+    /*
+     * @dev Function to mint tokens with a specific id
+     * @param eventId EventId for the new token
+     * @param tokenId TokenId for the new token
+     * @param to The address that will receive the minted tokens.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function mintToken(uint256 eventId, uint256 tokenId, address to)
+    public whenNotPaused onlyEventMinter(eventId) returns (bool)
+    {
+        return _mintToken(eventId, tokenId, to);
+    }
+
 
     /*
      * @dev Function to mint tokens
@@ -146,7 +153,7 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
      * @dev Burns a specific ERC721 token.
      * @param tokenId uint256 id of the ERC721 token to be burned.
      */
-    function burn(uint256 tokenId) public {
+    function burn(uint256 tokenId) public override {
         require(_msgSender() == ownerOf(tokenId) || isAdmin(_msgSender()));
         __burn(tokenId);
     }
@@ -160,6 +167,7 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
      */
     function __burn(uint256 tokenId) internal {
         super._burn(tokenId);
+
         delete _tokenEvent[tokenId];
     }
 
@@ -176,6 +184,10 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
         _tokenEvent[tokenId] = eventId;
         emit EventToken(eventId, tokenId);
         return true;
+    }
+
+    function removeAdmin(address account) public onlyAdmin {
+        _removeAdmin(account);
     }
 
     /*
@@ -234,34 +246,27 @@ contract XPoap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausab
         }
         return string(babcde);
     }
-
+    
     // The following functions are overrides required by Solidity.
-/*     function _update(address to, uint256 tokenId, address auth)
-        internal
-        override(ERC721, ERC721Enumerable)
-        returns (address)
-    {
-        return super._update(to, tokenId, auth);
-    }
-
-    function _increaseBalance(address account, uint128 value)
-        internal
-        override(ERC721, ERC721Enumerable)
-    {
-        super._increaseBalance(account, value);
-    } */
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721Enumerable, AccessControl)
+        override(AnnotatedMintNft, ERC721Enumerable, AccessControl)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
     }
-
+    
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 amount) internal virtual override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, firstTokenId, amount);
+    }
+
+    function _baseURI() internal view virtual override(ERC721, AnnotatedMintNft) returns (string memory) {
+        return ___baseURI;
+    }
+
+    function totalSupply() public view virtual override(ERC721Enumerable, AnnotatedMintNft) returns (uint256) {
+        return super.totalSupply();
     }
 
 }

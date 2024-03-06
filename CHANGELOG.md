@@ -11,16 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - hardhat.config.js
 - Changelog.md
+- contracts/PoapSoulbound.sol
+- test/Poap.js
+
+### Removed
+
+- truffle.config.js
+- play.js
 
 ### Changed
 
 - Converted from Truffle to Hardhat project
 - Updated Solidity version from v0.5.0 to v0.8.24 in smart contracts
-- Updated Open Zeppelin Contract's to version 5
-
-### Removed
-
-- truffle.config.js
+- Updated Open Zeppelin Contract's to version 4 (Paima Engine does not support version 5 yet)
 
 ### Pending
 

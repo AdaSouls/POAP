@@ -250,20 +250,20 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     }
     
     // The following functions are overrides required by Solidity.
-    function _update(address to, uint256 tokenId, address auth)
+/*     function _update(address to, uint256 tokenId, address auth)
         internal
         override(ERC721, ERC721Enumerable)
         returns (address)
     {
         return super._update(to, tokenId, auth);
-    }
+    } */
 
-    function _increaseBalance(address account, uint128 value)
+/*     function _increaseBalance(address account, uint128 value)
         internal
         override(ERC721, ERC721Enumerable)
     {
         super._increaseBalance(account, value);
-    }
+    } */
 
     function supportsInterface(bytes4 interfaceId)
         public
@@ -272,5 +272,9 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
+    }
+    
+    function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 amount) internal virtual override(ERC721, ERC721Enumerable) {
+        super._beforeTokenTransfer(from, to, firstTokenId, amount);
     }
 }
