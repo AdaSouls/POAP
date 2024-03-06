@@ -1,9 +1,10 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
 
-import "zos-lib/contracts/Initializable.sol";
-import "openzeppelin-eth/contracts/token/ERC721/ERC721.sol";
-import "openzeppelin-eth/contracts/token/ERC721/ERC721Enumerable.sol";
-import "openzeppelin-eth/contracts/token/ERC721/IERC721Metadata.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import "./PoapRoles.sol";
 import "./PoapPausable.sol";
 
@@ -21,13 +22,13 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     event EventToken(uint256 eventId, uint256 tokenId);
 
     // Token name
-    string private _name;
+    //string private _name;
 
     // Token symbol
-    string private _symbol;
+    //string private _symbol;
 
     // Base token URI
-    string private _baseURI;
+    string private ___baseURI;
 
     // Last Used id (used to generate new ids)
     uint256 private lastId;
@@ -36,65 +37,89 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     mapping(uint256 => uint256) private _tokenEvent;
 
 
-    bytes4 private constant _INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
+    bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
-    /**
+    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
+
+    //function initialize(string memory __name, string memory __symbol, string memory __baseURI, address[] memory admins)
+    function initialize(string memory __baseURI, address[] memory admins)
+    public initializer
+    {
+        //new ERC721(__name, __symbol);
+        //ERC721Enumerable();
+        PoapRoles.initialize(_msgSender());
+        PoapPausable.initialize();
+
+        // Add the requested admins
+        for (uint256 i = 0; i < admins.length; ++i) {
+            _addAdmin(admins[i]);
+        }
+
+        //_name = __name;
+        //_symbol = __symbol;
+        ___baseURI = __baseURI;
+
+        // register the supported interfaces to conform to ERC721 via ERC165
+        supportsInterface(INTERFACE_ID_ERC721_METADATA);
+    }
+
+    /*
      * @dev Gets the token name
      * @return string representing the token name
      */
-    function name() external view returns (string memory) {
+/*     function name() override public view returns (string memory) {
         return _name;
-    }
+    } */
 
-    /**
+    /*
      * @dev Gets the token symbol
      * @return string representing the token symbol
      */
-    function symbol() external view returns (string memory) {
+/*     function symbol() override public view returns (string memory) {
         return _symbol;
-    }
+    } */
 
     function tokenEvent(uint256 tokenId) public view returns (uint256) {
         return _tokenEvent[tokenId];
     }
 
-    /**
-     * @dev Gets the token ID at a given index of the tokens list of the requested owner
-     * @param owner address owning the tokens list to be accessed
-     * @param index uint256 representing the index to be accessed of the requested tokens list
-     * @return uint256 token ID at the given index of the tokens list owned by the requested address
+    /*
+     ** @dev Gets the token ID at a given index of the tokens list of the requested owner
+     ** @param owner address owning the tokens list to be accessed
+     ** @param index uint256 representing the index to be accessed of the requested tokens list
+     ** @return uint256 token ID at the given index of the tokens list owned by the requested address
      */
     function tokenDetailsOfOwnerByIndex(address owner, uint256 index) public view returns (uint256 tokenId, uint256 eventId) {
         tokenId = tokenOfOwnerByIndex(owner, index);
         eventId = tokenEvent(tokenId);
     }
 
-    /**
+    /* 
      * @dev Gets the token uri
      * @return string representing the token uri
      */
-    function tokenURI(uint256 tokenId) external view returns (string memory) {
+    function tokenURI(uint256 tokenId) override public view returns (string memory) {
         uint eventId = _tokenEvent[tokenId];
-        return _strConcat(_baseURI, _uint2str(eventId), "/", _uint2str(tokenId), "");
+        return _strConcat(___baseURI, _uint2str(eventId), "/", _uint2str(tokenId), "");
     }
 
     function setBaseURI(string memory baseURI) public onlyAdmin whenNotPaused {
-        _baseURI = baseURI;
+        ___baseURI = baseURI;
     }
 
-    function approve(address to, uint256 tokenId) public whenNotPaused {
+    function approve(address to, uint256 tokenId) override(ERC721, IERC721) public whenNotPaused {
         super.approve(to, tokenId);
     }
 
-    function setApprovalForAll(address to, bool approved) public whenNotPaused {
+    function setApprovalForAll(address to, bool approved) override(ERC721, IERC721) public whenNotPaused {
         super.setApprovalForAll(to, approved);
     }
 
-    function transferFrom(address from, address to, uint256 tokenId) public whenNotPaused {
+    function transferFrom(address from, address to, uint256 tokenId) override(ERC721, IERC721) public whenNotPaused {
         super.transferFrom(from, to, tokenId);
     }
 
-    /**
+    /*
      * @dev Function to mint tokens
      * @param eventId EventId for the new token
      * @param to The address that will receive the minted tokens.
@@ -107,7 +132,7 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         return _mintToken(eventId, lastId, to);
     }
 
-    /**
+    /*
      * @dev Function to mint tokens with a specific id
      * @param eventId EventId for the new token
      * @param tokenId TokenId for the new token
@@ -121,7 +146,7 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     }
 
 
-    /**
+    /*
      * @dev Function to mint tokens
      * @param eventId EventId for the new token
      * @param to The address that will receive the minted tokens.
@@ -137,7 +162,7 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         return true;
     }
 
-    /**
+    /*
      * @dev Function to mint tokens
      * @param eventIds EventIds to assing to user
      * @param to The address that will receive the minted tokens.
@@ -153,50 +178,29 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         return true;
     }
 
-    /**
+    /*
      * @dev Burns a specific ERC721 token.
      * @param tokenId uint256 id of the ERC721 token to be burned.
      */
     function burn(uint256 tokenId) public {
-        require(_isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender));
-        _burn(tokenId);
+        require(_msgSender() == ownerOf(tokenId) || isAdmin(_msgSender()));
+        __burn(tokenId);
     }
 
-    function initialize(string memory __name, string memory __symbol, string memory __baseURI, address[] memory admins)
-    public initializer
-    {
-        ERC721.initialize();
-        ERC721Enumerable.initialize();
-        PoapRoles.initialize(msg.sender);
-        PoapPausable.initialize();
-
-        // Add the requested admins
-        for (uint256 i = 0; i < admins.length; ++i) {
-            _addAdmin(admins[i]);
-        }
-
-        _name = __name;
-        _symbol = __symbol;
-        _baseURI = __baseURI;
-
-        // register the supported interfaces to conform to ERC721 via ERC165
-        _registerInterface(_INTERFACE_ID_ERC721_METADATA);
-    }
-
-    /**
+    /*
      * @dev Internal function to burn a specific token
      * Reverts if the token does not exist
      *
      * @param owner owner of the token to burn
-     * @param tokenId uint256 ID of the token being burned by the msg.sender
+     * @param tokenId uint256 ID of the token being burned by the _msgSender()
      */
-    function _burn(address owner, uint256 tokenId) internal {
-        super._burn(owner, tokenId);
+    function __burn(uint256 tokenId) internal {
+        super._burn(tokenId);
 
         delete _tokenEvent[tokenId];
     }
 
-    /**
+    /*
      * @dev Function to mint tokens
      * @param eventId EventId for the new token
      * @param tokenId The token id to mint.
@@ -211,7 +215,7 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         return true;
     }
 
-    /**
+    /*
      * @dev Function to convert uint to string
      * Taken from https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.5.sol
      */
@@ -228,13 +232,13 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         bytes memory bstr = new bytes(len);
         uint k = len - 1;
         while (_i != 0) {
-            bstr[k--] = byte(uint8(48 + _i % 10));
+            bstr[k--] = bytes1(uint8(48 + _i % 10));
             _i /= 10;
         }
         return string(bstr);
     }
 
-    /**
+    /*
      * @dev Function to concat strings
      * Taken from https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.5.sol
      */
@@ -271,5 +275,29 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     function removeAdmin(address account) public onlyAdmin {
         _removeAdmin(account);
     }
+    
+    // The following functions are overrides required by Solidity.
+    function _update(address to, uint256 tokenId, address auth)
+        internal
+        override(ERC721, ERC721Enumerable)
+        returns (address)
+    {
+        return super._update(to, tokenId, auth);
+    }
 
+    function _increaseBalance(address account, uint128 value)
+        internal
+        override(ERC721, ERC721Enumerable)
+    {
+        super._increaseBalance(account, value);
+    }
+
+    function supportsInterface(bytes4 interfaceId)
+        public
+        view
+        override(ERC721, ERC721Enumerable, AccessControl)
+        returns (bool)
+    {
+        return super.supportsInterface(interfaceId);
+    }
 }

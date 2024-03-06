@@ -1,18 +1,19 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
 
-import "zos-lib/contracts/Initializable.sol";
-import "openzeppelin-eth/contracts/access/Roles.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
 
-contract PoapRoles is Initializable {
-    using Roles for Roles.Role;
+contract PoapRoles is Initializable, AccessControl {
+    
+    bytes32 public constant EVENT_MINTER_ROLE = keccak256("EVENT_MINTER_ROLE");
 
     event AdminAdded(address indexed account);
     event AdminRemoved(address indexed account);
     event EventMinterAdded(uint256 indexed eventId, address indexed account);
     event EventMinterRemoved(uint256 indexed eventId, address indexed account);
 
-    Roles.Role private _admins;
-    mapping(uint256 => Roles.Role) private _minters;
+    mapping(uint256 => mapping(address => bool)) private _eventMinters;
 
     function initialize(address sender) public initializer {
         if (!isAdmin(sender)) {
@@ -21,21 +22,21 @@ contract PoapRoles is Initializable {
     }
 
     modifier onlyAdmin() {
-        require(isAdmin(msg.sender));
+        require(isAdmin(_msgSender()));
         _;
     }
 
     modifier onlyEventMinter(uint256 eventId) {
-        require(isEventMinter(eventId, msg.sender));
+        require(isEventMinter(eventId, _msgSender()));
         _;
     }
 
     function isAdmin(address account) public view returns (bool) {
-        return _admins.has(account);
+        return hasRole(DEFAULT_ADMIN_ROLE, account);
     }
 
     function isEventMinter(uint256 eventId, address account) public view returns (bool) {
-        return isAdmin(account) || _minters[eventId].has(account);
+        return isAdmin(account) || _eventMinters[eventId][account];
     }
 
     function addEventMinter(uint256 eventId, address account) public onlyEventMinter(eventId) {
@@ -47,11 +48,11 @@ contract PoapRoles is Initializable {
     }
 
     function renounceEventMinter(uint256 eventId) public {
-        _removeEventMinter(eventId, msg.sender);
+        _removeEventMinter(eventId, _msgSender());
     }
 
     function renounceAdmin() public {
-        _removeAdmin(msg.sender);
+        _removeAdmin(_msgSender());
     }
 
     function removeEventMinter(uint256 eventId, address account) public onlyAdmin {
@@ -59,22 +60,22 @@ contract PoapRoles is Initializable {
     }
 
     function _addEventMinter(uint256 eventId, address account) internal {
-        _minters[eventId].add(account);
+        _eventMinters[eventId][account] = true;
         emit EventMinterAdded(eventId, account);
     }
 
     function _addAdmin(address account) internal {
-        _admins.add(account);
+        grantRole(DEFAULT_ADMIN_ROLE, account);
         emit AdminAdded(account);
     }
 
     function _removeEventMinter(uint256 eventId, address account) internal {
-        _minters[eventId].remove(account);
+        _eventMinters[eventId][account] = false;
         emit EventMinterRemoved(eventId, account);
     }
 
     function _removeAdmin(address account) internal {
-        _admins.remove(account);
+        revokeRole(DEFAULT_ADMIN_ROLE, account);
         emit AdminRemoved(account);
     }
 

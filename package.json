@@ -1,5 +1,5 @@
 {
-  "name": "poap-contracts",
+  "name": "adasouls-poap",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -11,16 +11,23 @@
   },
   "author": "Mariano Cortesi <mcortesi@gmail.com>",
   "license": "ISC",
-  "dependencies": {
-    "openzeppelin-eth": "2.1.3",
-    "truffle": "5.0.4",
-    "truffle-hdwallet-provider": "1.0.9",
-    "zos": "2.2.3",
-    "zos-lib": "2.2.3"
-  },
   "devDependencies": {
-    "chai": "4.2.0",
-    "ethers": "4.0.27",
-    "solhint": "2.0.0"
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
+    "@nomicfoundation/hardhat-ethers": "^3.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.0",
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-verify": "^2.0.0",
+    "@typechain/ethers-v6": "^0.5.0",
+    "@typechain/hardhat": "^9.0.0",
+    "chai": "^4.2.0",
+    "ethers": "^6.4.0",
+    "hardhat": "^2.21.0",
+    "hardhat-gas-reporter": "^1.0.8",
+    "solidity-coverage": "^0.8.0",
+    "typechain": "^8.3.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.2",
+    "yarn": "^1.22.21"
   }
 }

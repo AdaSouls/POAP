@@ -1,6 +1,7 @@
-pragma solidity ^0.5.0;
+// SPDX-License-Identifier: MIT
+pragma solidity 0.8.24;
 
-import "zos-lib/contracts/Initializable.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./PoapRoles.sol";
 
 /**
@@ -45,7 +46,7 @@ contract PoapPausable is Initializable, PoapRoles {
      */
     function pause() public onlyAdmin whenNotPaused {
         _paused = true;
-        emit Paused(msg.sender);
+        emit Paused(_msgSender());
     }
 
     /**
@@ -53,7 +54,7 @@ contract PoapPausable is Initializable, PoapRoles {
      */
     function unpause() public onlyAdmin whenPaused {
         _paused = false;
-        emit Unpaused(msg.sender);
+        emit Unpaused(_msgSender());
     }
 
     // For future extensions

@@ -1,14 +1,14 @@
-# zos sessions
-zos.dev-*
-
-# contracts build
-build
-
-.zos.session
-.openzeppelin/
-
-# Node
 node_modules
+.env
 
-# IDEs
-.idea/
+# Hardhat files
+/cache
+/artifacts
+
+# TypeChain files
+/typechain
+/typechain-types
+
+# solidity-coverage files
+/coverage
+/coverage.json
