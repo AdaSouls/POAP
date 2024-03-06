@@ -1,12 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import "./PoapRoles.sol";
-import "./PoapPausable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
+import {IERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import {AnnotatedMintNft} from "./AnnotatedMintNft.sol";
+import {PoapRoles, AccessControl} from "./PoapRoles.sol";
+import {PoapPausable} from "./PoapPausable.sol";
+import {PoapSoulbound} from "./PoapSoulbound.sol";
 
 
 // Desired Features
@@ -18,7 +20,7 @@ import "./PoapPausable.sol";
 // - Pause contract (only admin)
 // - ERC721 full interface (base, metadata, enumerable)
 
-contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausable {
+contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausable, AnnotatedMintNft, PoapSoulbound {
     event EventToken(uint256 eventId, uint256 tokenId);
 
     // Base token URI
@@ -32,7 +34,7 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
+    constructor(string memory name_, string memory symbol_, uint256 supply_, address owner_) AnnotatedMintNft(name_, symbol_, supply_, owner_) {}
 
     function initialize(string memory __baseURI, address[] memory admins)
     public initializer
@@ -71,12 +73,12 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
      * @dev Gets the token uri
      * @return string representing the token uri
      */
-    function tokenURI(uint256 tokenId) override public view returns (string memory) {
+    function tokenURI(uint256 tokenId) override(AnnotatedMintNft, ERC721) public view returns (string memory) {
         uint eventId = _tokenEvent[tokenId];
         return _strConcat(___baseURI, _uint2str(eventId), "/", _uint2str(tokenId), "");
     }
 
-    function setBaseURI(string memory baseURI) public onlyAdmin whenNotPaused {
+    function setBaseURI(string memory baseURI) public override onlyAdmin whenNotPaused {
         ___baseURI = baseURI;
     }
 
@@ -155,7 +157,7 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
      * @dev Burns a specific ERC721 token.
      * @param tokenId uint256 id of the ERC721 token to be burned.
      */
-    function burn(uint256 tokenId) public {
+    function burn(uint256 tokenId) public override {
         require(_msgSender() == ownerOf(tokenId) || isAdmin(_msgSender()));
         __burn(tokenId);
     }
@@ -250,25 +252,10 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     }
     
     // The following functions are overrides required by Solidity.
-/*     function _update(address to, uint256 tokenId, address auth)
-        internal
-        override(ERC721, ERC721Enumerable)
-        returns (address)
-    {
-        return super._update(to, tokenId, auth);
-    } */
-
-/*     function _increaseBalance(address account, uint128 value)
-        internal
-        override(ERC721, ERC721Enumerable)
-    {
-        super._increaseBalance(account, value);
-    } */
-
     function supportsInterface(bytes4 interfaceId)
         public
-        view
-        override(ERC721, ERC721Enumerable, AccessControl)
+        pure
+        override(ERC721, ERC721Enumerable, AccessControl, AnnotatedMintNft)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -277,4 +264,14 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     function _beforeTokenTransfer(address from, address to, uint256 firstTokenId, uint256 amount) internal virtual override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, firstTokenId, amount);
     }
+
+    function totalSupply() public view virtual override(ERC721Enumerable, AnnotatedMintNft) returns (uint256) {
+        return super.totalSupply();
+    }
+
+    /// @dev Returns the `baseURI` of this NFT.
+    function _baseURI() internal view virtual override(AnnotatedMintNft, ERC721) returns (string memory) {
+        return super._baseURI();
+    }
+
 }

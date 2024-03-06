@@ -1,14 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+//import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "./PoapRoles.sol";
 
 /**
  * @title Soulbound
  * @dev Base contract which allows children to implement a minimal soulbound token behaviour.
  */
-contract PoapSoulbound is Initializable, PoapRoles {
+//contract PoapSoulbound is Initializable, PoapRoles {
+abstract contract PoapSoulbound is PoapRoles {
 
     /* @notice Emitted when the locking status is changed to locked.
      * @dev If a token is minted and the status is locked, this event should be emitted.

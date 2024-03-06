@@ -24,7 +24,7 @@ The formal Soulbound Token Standards that we have consider to build our smart co
 As we said, for State Management on our POAPs we use Paima Engine, particularly the [`AnnotatedMintNft`](https://docs.paimastudios.com/home/libraries/evm-contracts/solidity/generated-docs#annotatedmintnft) smart contract. 
 
 ## Automated Tests
-To test our smart contracts we will use Hardhat and Mocha libraries.
+To test our smart contracts we will use [Hardhat](https://hardhat.org/) framework and [Mocha](https://mochajs.org/) libraries.
 
 
 ## Get Started

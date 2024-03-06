@@ -7,7 +7,7 @@ async function deployPoapFixture() {
     const [owner, addr1, addr2] = await ethers.getSigners();
 
     const poapFactory = await ethers.getContractFactory("Poap");
-    const poapToken = await poapFactory.deploy("Test Poap", "TPOAP");
+    const poapToken = await poapFactory.deploy("Test Poap", "TPOAP", 10, owner.address);
 
     // Fixtures can return anything you consider useful for your tests
     return { poapToken, owner, addr1, addr2 };
