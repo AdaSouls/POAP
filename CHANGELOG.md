@@ -21,3 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - truffle.config.js
+
+### Pending
+
+- Add Soulbound extension
+- Add Stateful NFT support
+- Prepare tests for all smart contracts
+- Prepare smart contracts deployment scripts
+- Deploy all smart contracts in Milkomeda C1 Cardano
+- Prepare Smart Contracts Deployment report

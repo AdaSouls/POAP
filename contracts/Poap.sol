@@ -21,12 +21,6 @@ import "./PoapPausable.sol";
 contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausable {
     event EventToken(uint256 eventId, uint256 tokenId);
 
-    // Token name
-    //string private _name;
-
-    // Token symbol
-    //string private _symbol;
-
     // Base token URI
     string private ___baseURI;
 
@@ -36,17 +30,14 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
 
-
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
     constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
 
-    //function initialize(string memory __name, string memory __symbol, string memory __baseURI, address[] memory admins)
     function initialize(string memory __baseURI, address[] memory admins)
     public initializer
     {
-        //new ERC721(__name, __symbol);
-        //ERC721Enumerable();
+
         PoapRoles.initialize(_msgSender());
         PoapPausable.initialize();
 
@@ -55,29 +46,11 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
             _addAdmin(admins[i]);
         }
 
-        //_name = __name;
-        //_symbol = __symbol;
         ___baseURI = __baseURI;
 
         // register the supported interfaces to conform to ERC721 via ERC165
         supportsInterface(INTERFACE_ID_ERC721_METADATA);
     }
-
-    /*
-     * @dev Gets the token name
-     * @return string representing the token name
-     */
-/*     function name() override public view returns (string memory) {
-        return _name;
-    } */
-
-    /*
-     * @dev Gets the token symbol
-     * @return string representing the token symbol
-     */
-/*     function symbol() override public view returns (string memory) {
-        return _symbol;
-    } */
 
     function tokenEvent(uint256 tokenId) public view returns (uint256) {
         return _tokenEvent[tokenId];
@@ -215,6 +188,10 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
         return true;
     }
 
+    function removeAdmin(address account) public onlyAdmin {
+        _removeAdmin(account);
+    }
+
     /*
      * @dev Function to convert uint to string
      * Taken from https://github.com/oraclize/ethereum-api/blob/master/oraclizeAPI_0.5.sol
@@ -270,10 +247,6 @@ contract Poap is Initializable, ERC721, ERC721Enumerable, PoapRoles, PoapPausabl
             babcde[k++] = _be[i];
         }
         return string(babcde);
-    }
-
-    function removeAdmin(address account) public onlyAdmin {
-        _removeAdmin(account);
     }
     
     // The following functions are overrides required by Solidity.
