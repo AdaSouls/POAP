@@ -1,78 +1,20 @@
-## Setup
+
+# AdaSouls POAP
+
+[AdaSouls POAP](https://AdaSouls.io) is a fork of the [Proof of Attendance Protocol](https://poap.xyz/) (POAP) that adds Soulbound and Stateful capabilities to its badges.
+
+[Soulbound Tokens](https://deliverypdf.ssrn.com/delivery.php?ID=231116021119088068031090117103064121018062034043090044011064091076101007106088114104029123096099014032005001116003118013081096037012043042080122112114064095064117102042013042095102024092097004087103002112027064092027095011120078005087097126067100011113&EXT=pdf&INDEX=TRUE) were introduced by Vitalik Buterin in May 2022 and we believe that they should, in most cases, be attached to their original recipient at all times.
+
+On the other hand, [Stateful NFTs](https://docs.paimastudios.com/home/smart-contracts/evm/deploy-stateful-nft) are a key part of the [Paima Engine](https://docs.paimastudios.com/) and they give us the ability to update the state of our tokens, so that they can reflect multiple event attendance in only one token, without the need of minting extra NFTs, saving both time and money.
+
+AdaSouls POAP is a [Project Catalyst Fund11 Funded Project](https://projectcatalyst.io/funds/11/cardano-open-developers/poap-in-cardano) and it is live in the [Milkomeda C1 Cardano Network](https://docs.milkomeda.com/home/intro-c1) with the idea to offer interoperability with Cardano Mainnet.
+
+## Automated Tests
+To test our smart contracts we will use Hardhat and Mocha libraries.
+
+## Start
 
 Install dependencies:
 
-    nvm use # Should install node 10.16.0
-    npm install -g ganache-cli
+    nvm use 18.16.1 # Should install node 18.16.1
     npm install
-
-### Ganache
-
-Run Ganache:
-
-    ganache-cli --port 9545 --deterministic
-
-Any time you shutdown ganache, you will need to do `zos push` and `zos create` to deploy the project into the blank blockchain.
-
-    npx zos session --network local --from 0x1df62f291b2e969fb0849d99d9ce41e2f137006e --expires 3600
-    zos push
-    zos create XPoap --init initialize --args '"Poap","POAP","https://poap.xyz",[]'
-
-### Truffle Commands
-
-To run a console:
-
-    npx truffle console --network local
-
-To run tests:
-
-    npx truffle test
-
-## Useful Commands
-
-### Working with ZeppelinOS
-
-#### Session
-
-Start by creating a session:
-
-```bash
-npx zos session --network local --from 0x1df62f291b2e969fb0849d99d9ce41e2f137006e --expires 3600
-```
-
-This creates a "connection" that will be used for every zos command. We define which network to connect, which account to use by default
-for all transaction and when it expires (3600 seconds after last used).
-
-If no current session exists, or it its expired we need to create one.
-
-#### Create or Upgrade Contracts
-
-When we create a new contract run:
-
-    npx zos add MyContract
-
-To upgrade a current contract (change the code of it)
-
-    npx zos update MyContract
-
-After any change we need to **push** the changes:
-
-    npx zos push
-
-`add` and `update` only change the contract instance, but they don't actually release/create an instance of that contract.
-To create an instance we do:
-
-    npz zos create MyContract --init initialize --args 42,hitchhiker
-
-### Contract addresses
-
-#### Production
-
-- Mainnet: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://etherscan.io/address/0x22c1f6050e56d2876009903609a2cc3fef83b415)
-- xDAI: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://blockscout.com/poa/xdai/address/0x22c1f6050e56d2876009903609a2cc3fef83b415/transactions)
-
-#### Development
-
-- Rinkeby: []()
-- Sokol: [0x22c1f6050e56d2876009903609a2cc3fef83b415](https://blockscout.com/poa/sokol/address/0x22c1f6050e56d2876009903609a2cc3fef83b415/transactions)
-- Binance Smart Chain: [0xe310633E107e87F8Dfe50b00C360be60e926A1d6](https://testnet.bscscan.com/address/0xe310633e107e87f8dfe50b00c360be60e926a1d6)
