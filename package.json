@@ -1,16 +1,14 @@
 {
   "name": "adasouls-poap",
   "version": "1.0.0",
-  "description": "",
+  "description": "A fork of the Proof of Attendance Protocol that adds Soulbound and Stateful capabilities to its badges.",
   "main": "index.js",
   "scripts": {
-    "test": "truffle test",
-    "lint:sol": "solhint --max-warnings 0 \"contracts/*.sol\"",
-    "build": "truffle compile",
-    "flat": "./node_modules/.bin/poa-solidity-flattener ./contracts/XPoap.sol"
+    "test": "npx hardhat test",
+    "build": "npx hardhat compile"
   },
-  "author": "Mariano Cortesi <mcortesi@gmail.com>",
-  "license": "ISC",
+  "author": "Matias Falcone <matias.falcone@gmail.com>",
+  "license": "MIT",
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.0",
     "@nomicfoundation/hardhat-ethers": "^3.0.0",
@@ -29,7 +27,6 @@
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.6",
     "@paima/evm-contracts": "^1.1.0",
-    "@paima/sdk": "^2.2.0",
-    "yarn": "^1.22.21"
+    "@paima/sdk": "^2.2.0"
   }
 }
