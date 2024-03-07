@@ -46,7 +46,10 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     }
 
     /// @dev Emitted when max supply is updated from `oldMaxSupply` to `newMaxSupply`.
-    event UpdateMaxSupply(uint256 indexed oldMaxSupply, uint256 indexed newMaxSupply);
+    event UpdateMaxSupply(
+        uint256 indexed oldMaxSupply,
+        uint256 indexed newMaxSupply
+    );
 
     /// @dev Emitted when `newMinter` is added to the mapping of allowed `minters`.
     event SetMinter(address indexed newMinter);
@@ -80,7 +83,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// @dev Returns true if this contract implements the interface defined by `interfaceID`. See EIP165.
     function supportsInterface(
         bytes4 interfaceID
-    ) public virtual pure override(ERC165, ERC721) returns (bool) {
+    ) public pure virtual override(ERC165, ERC721) returns (bool) {
         return
             interfaceID == this.supportsInterface.selector || // ERC165
             interfaceID == this.mint.selector; // ERC721 Paima-extended
@@ -90,8 +93,14 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// Increases the `totalSupply` and `currentTokenId`.
     /// Reverts if `totalSupply` is not less than `maxSupply` or if `_to` is a zero address.
     /// Emits the `Minted` event.
-    function mint(address _to, string calldata initialData) external canMint returns (uint256) {
-        require(maxSupply > _totalSupply, "AnnotatedMintNft: max supply reached");
+    function mint(
+        address _to,
+        string calldata initialData
+    ) external canMint returns (uint256) {
+        require(
+            maxSupply > _totalSupply,
+            "AnnotatedMintNft: max supply reached"
+        );
         require(_to != address(0), "AnnotatedMintNft: zero receiver address");
 
         uint256 tokenId = currentTokenId;
@@ -108,7 +117,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// Reverts if `_tokenId` is not existing.
     function burn(
         uint256 _tokenId
-    ) virtual external onlyExistingTokenId(_tokenId) onlyTokenOwner(_tokenId) {
+    ) external virtual onlyExistingTokenId(_tokenId) onlyTokenOwner(_tokenId) {
         _totalSupply--;
         _burn(_tokenId);
     }
@@ -134,12 +143,14 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     }
 
     /// @dev Returns the `baseURI` of this NFT.
-    function _baseURI() virtual internal view override returns (string memory) {
+    function _baseURI() internal view virtual override returns (string memory) {
         return baseURI;
     }
 
     /// @dev Returns the token URI of specified `tokenId`.
-    function tokenURI(uint256 tokenId) public virtual view override returns (string memory) {
+    function tokenURI(
+        uint256 tokenId
+    ) public view virtual override returns (string memory) {
         string memory URI = super.tokenURI(tokenId);
         return string(abi.encodePacked(URI, baseExtension));
     }
@@ -147,7 +158,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// @dev Sets `_URI` as the `baseURI` of the NFT.
     /// Callable only by the contract owner.
     /// Emits the `SetBaseURI` event.
-    function setBaseURI(string memory _URI) virtual external onlyOwner {
+    function setBaseURI(string memory _URI) external virtual onlyOwner {
         string memory oldURI = baseURI;
         baseURI = _URI;
         emit SetBaseURI(oldURI, _URI);
@@ -155,7 +166,9 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
 
     /// @dev Sets `_newBaseExtension` as the `baseExtension` of the NFT.
     /// Callable only by the contract owner.
-    function setBaseExtension(string memory _newBaseExtension) public onlyOwner {
+    function setBaseExtension(
+        string memory _newBaseExtension
+    ) public onlyOwner {
         baseExtension = _newBaseExtension;
     }
 
@@ -164,7 +177,10 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// Emits the `UpdateMaxSupply` event.
     function updateMaxSupply(uint256 _maxSupply) external onlyOwner {
         uint256 oldMaxSupply = maxSupply;
-        require(_maxSupply > oldMaxSupply, "AnnotatedMintNft: old supply less than new supply");
+        require(
+            _maxSupply > oldMaxSupply,
+            "AnnotatedMintNft: old supply less than new supply"
+        );
 
         maxSupply = _maxSupply;
         emit UpdateMaxSupply(oldMaxSupply, _maxSupply);
@@ -180,7 +196,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
         return minters[_account];
     }
 
-    function totalSupply() public virtual view returns (uint256) {
+    function totalSupply() public view virtual returns (uint256) {
         return _totalSupply;
     }
 }

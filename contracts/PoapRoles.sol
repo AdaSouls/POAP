@@ -1,11 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/access/AccessControl.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract PoapRoles is Initializable, AccessControl {
-    
     bytes32 public constant EVENT_MINTER_ROLE = keccak256("EVENT_MINTER_ROLE");
 
     event AdminAdded(address indexed account);
@@ -35,11 +34,17 @@ contract PoapRoles is Initializable, AccessControl {
         return hasRole(DEFAULT_ADMIN_ROLE, account);
     }
 
-    function isEventMinter(uint256 eventId, address account) public view returns (bool) {
+    function isEventMinter(
+        uint256 eventId,
+        address account
+    ) public view returns (bool) {
         return isAdmin(account) || _eventMinters[eventId][account];
     }
 
-    function addEventMinter(uint256 eventId, address account) public onlyEventMinter(eventId) {
+    function addEventMinter(
+        uint256 eventId,
+        address account
+    ) public onlyEventMinter(eventId) {
         _addEventMinter(eventId, account);
     }
 
@@ -55,7 +60,10 @@ contract PoapRoles is Initializable, AccessControl {
         _removeAdmin(_msgSender());
     }
 
-    function removeEventMinter(uint256 eventId, address account) public onlyAdmin {
+    function removeEventMinter(
+        uint256 eventId,
+        address account
+    ) public onlyAdmin {
         _removeEventMinter(eventId, account);
     }
 

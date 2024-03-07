@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "./PoapRoles.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {PoapRoles} from "./PoapRoles.sol";
 
 /**
  * @title Pausable
