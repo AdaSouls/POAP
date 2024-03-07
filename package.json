@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.6",
-    "@paima/evm-contracts": "^1.1.0",
     "@paima/sdk": "^2.2.0"
   }
 }
