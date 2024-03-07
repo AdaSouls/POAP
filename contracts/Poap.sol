@@ -145,7 +145,7 @@ contract Poap is
         super.transferFrom(from, to, tokenId);
     }
 
-    /**
+    /*
      * @dev Safely transfers the ownership of a given token ID to another address (Implements ERC71)
      * Wrapper for function extended from ERC721 (  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol )
      * Requires
@@ -164,7 +164,7 @@ contract Poap is
         super.safeTransferFrom(from, to, tokenId);
     }
 
-    /**
+    /*
      * @dev Safely transfers the ownership of a given token ID to another address (Implements ERC71)
      * Wrapper for function extended from ERC721 (  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol )
      * Requires
@@ -185,7 +185,7 @@ contract Poap is
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
-    /**
+    /*
      * @dev Returns whether the specified token exists
      * @param tokenId uint256 ID of the token to query the existence of
      * @return bool whether the token exists
@@ -195,7 +195,7 @@ contract Poap is
         return owner != address(0);
     }
 
-    /**
+    /*
      * @dev Returns whether the given spender can transfer a given token ID
      * @param spender address of the spender to query
      * @param tokenId uint256 ID of the token to be transferred
@@ -373,7 +373,7 @@ contract Poap is
         return string(babcde);
     }
 
-    /**
+    /*
      * @dev Gets the freeze time for the token
      * @param tokenId ( uint256 ) The token id to freeze.
      * @return uint256 representing the token freeze time
@@ -382,7 +382,7 @@ contract Poap is
         return _tokenFrozen[tokenId];
     }
 
-    /**
+    /*
      * @dev Gets the token freeze status
      * @param tokenId ( uint256 ) The token id to freeze.
      * @return bool representing the token freeze status
@@ -391,7 +391,7 @@ contract Poap is
         return _tokenFrozen[tokenId] >= block.timestamp;
     }
 
-    /**
+    /*
      * @dev Modifier to make a function callable only when the toke is not frozen.
      * @param tokenId ( uint256 ) The token id to check.
      */
@@ -400,7 +400,7 @@ contract Poap is
         _;
     }
 
-    /**
+    /*
      * @dev Modifier to make a function callable only when the token is frozen.
      * @param tokenId ( uint256 ) The token id to check.
      */
@@ -409,7 +409,7 @@ contract Poap is
         _;
     }
 
-    /**
+    /*
      * @dev Called by the owner to set the time a token can be frozen.
      * Requires
      * - The msg sender to be the admin
@@ -420,7 +420,7 @@ contract Poap is
         freezeDuration = time * 1 seconds;
     }
 
-    /**
+    /*
      * @dev Freeze a specific ERC721 token.
      * Requires
      * - The msg sender to be the admin, owner, approved, or operator
@@ -438,7 +438,7 @@ contract Poap is
         _freeze(tokenId);
     }
 
-    /**
+    /*
      * @dev Unfreeze a specific ERC721 token.
      * Requires
      * - The msg sender to be the admin
@@ -452,7 +452,7 @@ contract Poap is
         _unfreeze(tokenId);
     }
 
-    /**
+    /*
      * @dev Internal function to freeze a specific token
      * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
      */
@@ -461,7 +461,7 @@ contract Poap is
         emit Frozen(tokenId);
     }
 
-    /**
+    /*
      * @dev Internal function to freeze a specific token
      * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
      */
