@@ -7,7 +7,7 @@ import {PoapRoles} from "./PoapRoles.sol";
  * @title Soulbound
  * @dev Base contract which allows children to implement a minimal soulbound token behaviour.
  */
-abstract contract PoapSoulbound is PoapRoles {
+contract PoapConsensual is PoapRoles {
     /* @notice Emitted when the locking status is changed to locked.
      * @dev If a token is minted and the status is locked, this event should be emitted.
      * @param tokenId The identifier for a token.
@@ -25,10 +25,11 @@ abstract contract PoapSoulbound is PoapRoles {
      *about them do throw.
      * @param tokenId The identifier for an SBT.
      */
-    function locked(uint256) external pure returns (bool) {
+    function locked(uint256) public pure returns (bool) {
         return true;
     }
 
     // For future extensions
-    uint256[50] private ______gap;
+    //uint256[50] private ______gap;
+
 }

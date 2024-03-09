@@ -5,10 +5,10 @@ import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.s
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import {AnnotatedMintNft} from "./AnnotatedMintNft.sol";
-import {PoapRoles, AccessControl} from "./PoapRoles.sol";
-import {PoapPausable} from "./PoapPausable.sol";
-import {PoapSoulbound} from "./PoapSoulbound.sol";
+import {PoapStateful} from "../poap-extensions/PoapStateful.sol";
+import {PoapRoles, AccessControl} from "../poap-extensions/PoapRoles.sol";
+import {PoapPausable} from "../poap-extensions/PoapPausable.sol";
+import {PoapSoulbound} from "../poap-extensions/PoapSoulbound.sol";
 
 // Desired Features
 // - Add Event
@@ -19,13 +19,13 @@ import {PoapSoulbound} from "./PoapSoulbound.sol";
 // - Pause contract (only admin)
 // - ERC721 full interface (base, metadata, enumerable)
 
-contract Poap is
+contract SoulboundPoap is
     Initializable,
     ERC721,
     ERC721Enumerable,
     PoapRoles,
     PoapPausable,
-    AnnotatedMintNft,
+    PoapStateful,
     PoapSoulbound
 {
     // Events
@@ -55,12 +55,12 @@ contract Poap is
         string memory symbol_,
         uint256 supply_,
         address owner_
-    ) AnnotatedMintNft(name_, symbol_, supply_, owner_) {}
+    ) PoapStateful(name_, symbol_, supply_, owner_) {}
 
     function initialize(
         string memory __baseURI,
         address[] memory admins
-    ) public initializer {
+    ) public initializer onlyOwner {
         PoapRoles.initialize(_msgSender());
         PoapPausable.initialize();
 
@@ -99,7 +99,7 @@ contract Poap is
      */
     function tokenURI(
         uint256 tokenId
-    ) public view override(AnnotatedMintNft, ERC721) returns (string memory) {
+    ) public view override(PoapStateful, ERC721) returns (string memory) {
         uint eventId = _tokenEvent[tokenId];
         return
             _strConcat(
@@ -141,7 +141,9 @@ contract Poap is
         address to,
         uint256 tokenId
     ) public override(ERC721, IERC721) whenNotPaused {
-        require(_isApprovedOrOwner(msg.sender, tokenId));
+        //require(_isApprovedOrOwner(msg.sender, tokenId));
+        //require(_isApprovedOrOwner(_msgSender(), tokenId));
+        require(!locked(tokenId));
         super.transferFrom(from, to, tokenId);
     }
 
@@ -161,6 +163,7 @@ contract Poap is
         address to,
         uint256 tokenId
     ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+        require(!locked(tokenId));
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -182,6 +185,7 @@ contract Poap is
         uint256 tokenId,
         bytes memory _data
     ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+        require(!locked(tokenId));
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -266,7 +270,8 @@ contract Poap is
      */
     function burn(uint256 tokenId) public override {
         require(
-            _isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
+            //_isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
+            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
             "Sender doesn't have permission"
         );
         __burn(tokenId);
@@ -432,7 +437,8 @@ contract Poap is
         uint256 tokenId
     ) public whenNotPaused whenNotFrozen(tokenId) {
         require(
-            _isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
+            //_isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
+            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
             "Sender doesn't have permission"
         );
         _freeze(tokenId);
@@ -476,7 +482,7 @@ contract Poap is
     )
         public
         pure
-        override(ERC721, ERC721Enumerable, AccessControl, AnnotatedMintNft)
+        override(ERC721, ERC721Enumerable, AccessControl, PoapStateful)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -495,7 +501,7 @@ contract Poap is
         public
         view
         virtual
-        override(ERC721Enumerable, AnnotatedMintNft)
+        override(ERC721Enumerable, PoapStateful)
         returns (uint256)
     {
         return super.totalSupply();
@@ -506,7 +512,7 @@ contract Poap is
         internal
         view
         virtual
-        override(AnnotatedMintNft, ERC721)
+        override(PoapStateful, ERC721)
         returns (string memory)
     {
         return super._baseURI();

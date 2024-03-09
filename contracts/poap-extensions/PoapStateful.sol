@@ -9,7 +9,7 @@ import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 /// @dev A standard ERC721 that accepts calldata in the mint function for any initialization data needed in a Paima dApp.
 /// Upon deployment only the contract owner (specified in constructor parameter) is able to mint tokens. Additional
 /// minters (e.g. NativeNftSale contract) need to be added by using the `setMinter` function.
-contract AnnotatedMintNft is ERC165, ERC721, Ownable {
+contract PoapStateful is ERC165, ERC721, Ownable {
     /// @dev The token ID that will be minted when calling the `mint` function.
     uint256 public currentTokenId;
     /// @dev Base URI that is used in the `tokenURI` function to form the start of the token URI.
@@ -28,20 +28,20 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     modifier canMint() {
         require(
             isMinter(msg.sender) || owner() == msg.sender,
-            "AnnotatedMintNft: not authorized to mint"
+            "PoapStateful: not authorized to mint"
         );
         _;
     }
 
     /// @dev Reverts if the `tokenId` does not exist (has not been minted).
     modifier onlyExistingTokenId(uint256 tokenId) {
-        require(_exists(tokenId), "AnnotatedMintNft: non-existent tokenId");
+        require(_exists(tokenId), "PoapStateful: non-existent tokenId");
         _;
     }
 
     /// @dev Reverts if `msg.sender` is not the specified token's owner.
     modifier onlyTokenOwner(uint256 tokenId) {
-        require(msg.sender == ownerOf(tokenId), "AnnotatedMintNft: not owner");
+        require(msg.sender == ownerOf(tokenId), "PoapStateful: not owner");
         _;
     }
 
@@ -99,9 +99,9 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     ) external canMint returns (uint256) {
         require(
             maxSupply > _totalSupply,
-            "AnnotatedMintNft: max supply reached"
+            "PoapStateful: max supply reached"
         );
-        require(_to != address(0), "AnnotatedMintNft: zero receiver address");
+        require(_to != address(0), "PoapStateful: zero receiver address");
 
         uint256 tokenId = currentTokenId;
         _safeMint(_to, tokenId);
@@ -126,7 +126,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// Callable only by the contract owner.
     /// Emits the `SetMinter` event.
     function setMinter(address _minter) external onlyOwner {
-        require(_minter != address(0), "AnnotatedMintNft: invalid minter");
+        require(_minter != address(0), "PoapStateful: invalid minter");
 
         minters[_minter] = true;
         emit SetMinter(_minter);
@@ -136,7 +136,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
     /// Callable only by the contract owner.
     /// Emits the `RemoveMinter` event.
     function removeMinter(address _minter) external onlyOwner {
-        require(_minter != address(0), "AnnotatedMintNft: invalid minter");
+        require(_minter != address(0), "PoapStateful: invalid minter");
 
         minters[_minter] = false;
         emit RemoveMinter(_minter);
@@ -179,7 +179,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
         uint256 oldMaxSupply = maxSupply;
         require(
             _maxSupply > oldMaxSupply,
-            "AnnotatedMintNft: old supply less than new supply"
+            "PoapStateful: old supply less than new supply"
         );
 
         maxSupply = _maxSupply;
