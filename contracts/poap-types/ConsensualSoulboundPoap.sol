@@ -228,6 +228,31 @@ contract ConsensualSoulboundPoap is
             isApprovedForAll(owner, spender));
     }
 
+    function issue(
+        uint256 eventId,
+        address to,
+        uint256 tokenId,
+        bool isLocked,
+        BurnAuth burnAuthority
+    ) public whenNotPaused onlyEventMinter(eventId) {
+        // check that the token id is not already used
+        require(ownerOf(tokenId) == address(0));
+
+        //_safeMint(to, tokenId);
+        mintToken(eventId, to);
+        
+        // remember is the token is locked
+        _isLocked[tokenId] = isLocked;
+
+        // remember the `burnAuth` for this token
+        _burnAuth[tokenId] = burnAuthority;
+        
+        // remember the issuer and owner of the token
+        _tokenIssuers[tokenId] = _msgSender();
+
+        emit Issued(_msgSender(), to, tokenId, burnAuthority);
+    }
+
     /*
      * @dev Function to mint tokens
      * @param eventId EventId for the new token
@@ -237,7 +262,7 @@ contract ConsensualSoulboundPoap is
     function mintToken(
         uint256 eventId,
         address to
-    ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
+    ) internal whenNotPaused onlyEventMinter(eventId) returns (bool) {
         lastId += 1;
         return _mintToken(eventId, lastId, to);
     }
@@ -285,6 +310,20 @@ contract ConsensualSoulboundPoap is
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
             "ConsensualSoulboundPoap: not authorized to burn"
         );
+        
+        address issuer = _tokenIssuers[tokenId];
+        address owner = ownerOf(tokenId);
+        BurnAuth burnAuthority = _burnAuth[tokenId];
+
+        // Check burn policy
+        require(
+            (burnAuthority == BurnAuth.Both &&
+                (_msgSender() == issuer || _msgSender() == owner)) ||
+                (burnAuthority == BurnAuth.IssuerOnly && _msgSender() == issuer) ||
+                (burnAuthority == BurnAuth.OwnerOnly && _msgSender() == owner),
+            "ConsensualSoulboundToken: burn policy does not allow this burn"
+        );
+
         // Unlock soulbound token before burn
         _isLocked[tokenId] = false;
         emit Unlocked(tokenId);
@@ -299,6 +338,9 @@ contract ConsensualSoulboundPoap is
      * @param tokenId uint256 ID of the token being burned by the _msgSender()
      */
     function __burn(uint256 tokenId) internal {
+        delete _tokenIssuers[tokenId];
+        delete _isLocked[tokenId];
+        delete _burnAuth[tokenId];
         super._burn(tokenId);
 
         delete _tokenEvent[tokenId];
