@@ -9,6 +9,7 @@ import {PoapStateful} from "../poap-extensions/PoapStateful.sol";
 import {PoapRoles, AccessControl} from "../poap-extensions/PoapRoles.sol";
 import {PoapPausable} from "../poap-extensions/PoapPausable.sol";
 import {IPoapSoulbound} from "../poap-interfaces/IPoapSoulbound.sol";
+import {IPoapConsensual} from "../poap-interfaces/IPoapConsensual.sol";
 
 // Desired Features
 // - Add Event
@@ -19,16 +20,18 @@ import {IPoapSoulbound} from "../poap-interfaces/IPoapSoulbound.sol";
 // - Pause contract (only admin)
 // - ERC721 full interface (base, metadata, enumerable)
 // - Soulbound token
+// - Consensual Soulbound token
 // - Stateful token
 
-contract SoulboundPoap is
+contract ConsensualSoulboundPoap is
     Initializable,
     ERC721,
     ERC721Enumerable,
     PoapRoles,
     PoapPausable,
     PoapStateful,
-    IPoapSoulbound
+    IPoapSoulbound,
+    IPoapConsensual
 {
     // Events
     event EventToken(uint256 indexed eventId, uint256 tokenId);
@@ -54,6 +57,12 @@ contract SoulboundPoap is
 
     // Locked tokens
     mapping(uint256 => bool) private _isLocked;
+
+    // Burn policy for a token
+    mapping(uint256 => BurnAuth) private _burnAuth;
+
+    // Token issuers
+    mapping(uint256 => address) private _tokenIssuers;
 
     constructor(
         string memory name_,
@@ -123,7 +132,7 @@ contract SoulboundPoap is
     }
 
     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(lastId < newLastId, "SoulboundPoap: lastId must be greater than newLastId");
+        require(lastId < newLastId, "ConsensualSoulboundPoap: lastId must be greater than newLastId");
         lastId = newLastId;
     }
 
@@ -146,7 +155,7 @@ contract SoulboundPoap is
         address to,
         uint256 tokenId
     ) public override(ERC721, IERC721) whenNotPaused {
-        require(!locked(tokenId), "SoulboundPoap: soulbound is locked to transfer");
+        require(!locked(tokenId), "ConsensualSoulboundPoap: soulbound is locked to transfer");
         super.transferFrom(from, to, tokenId);
     }
 
@@ -166,7 +175,7 @@ contract SoulboundPoap is
         address to,
         uint256 tokenId
     ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
-        require(!locked(tokenId), "SoulboundPoap: soulbound is locked to transfer");
+        require(!locked(tokenId), "ConsensualSoulboundPoap: soulbound is locked to transfer");
         super.safeTransferFrom(from, to, tokenId);
     }
 
@@ -188,7 +197,7 @@ contract SoulboundPoap is
         uint256 tokenId,
         bytes memory _data
     ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
-        require(!locked(tokenId), "SoulboundPoap: soulbound is locked to transfer");
+        require(!locked(tokenId), "ConsensualSoulboundPoap: soulbound is locked to transfer");
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -274,7 +283,7 @@ contract SoulboundPoap is
     function burn(uint256 tokenId) public override {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "SoulboundPoap: not authorized to burn"
+            "ConsensualSoulboundPoap: not authorized to burn"
         );
         // Unlock soulbound token before burn
         _isLocked[tokenId] = false;
@@ -408,7 +417,7 @@ contract SoulboundPoap is
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenNotFrozen(uint256 tokenId) {
-        require(!this.isFrozen(tokenId), "SoulboundPoap: soulbound token is frozen");
+        require(!this.isFrozen(tokenId), "ConsensualSoulboundPoap: soulbound token is frozen");
         _;
     }
 
@@ -417,7 +426,7 @@ contract SoulboundPoap is
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenFrozen(uint256 tokenId) {
-        require(this.isFrozen(tokenId), "SoulboundPoap: soulbound token is frozen");
+        require(this.isFrozen(tokenId), "ConsensualSoulboundPoap: soulbound token is frozen");
         _;
     }
 
@@ -445,7 +454,7 @@ contract SoulboundPoap is
     ) public whenNotPaused whenNotFrozen(tokenId) {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "SoulboundPoap: not authorize to freeze"
+            "ConsensualSoulboundPoap: not authorize to freeze"
         );
         _freeze(tokenId);
     }
@@ -483,8 +492,12 @@ contract SoulboundPoap is
     }
 
     function locked(uint256 tokenId) public view returns (bool) {
-        require(_exists(tokenId), "SoulboundPoap: soulbound token does not exist");
+        require(_exists(tokenId), "ConsensualSoulboundPoap: soulbound token does not exist");
         return _isLocked[tokenId];
+    }
+
+    function burnAuth(uint256 tokenId) external view returns (BurnAuth) {
+        return _burnAuth[tokenId];
     }
 
     // The following functions are overrides required by Solidity.

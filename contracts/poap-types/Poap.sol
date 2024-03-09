@@ -17,6 +17,7 @@ import {PoapPausable} from "../poap-extensions/PoapPausable.sol";
 // - Burn Tokens
 // - Pause contract (only admin)
 // - ERC721 full interface (base, metadata, enumerable)
+// - Stateful token
 
 contract Poap is
     Initializable,
@@ -116,7 +117,7 @@ contract Poap is
     }
 
     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(lastId < newLastId);
+        require(lastId < newLastId, "Poap: lastId must be greater than newLastId");
         lastId = newLastId;
     }
 
@@ -139,8 +140,7 @@ contract Poap is
         address to,
         uint256 tokenId
     ) public override(ERC721, IERC721) whenNotPaused {
-        //require(_isApprovedOrOwner(msg.sender, tokenId));
-        require(_isApprovedOrOwner(_msgSender(), tokenId));
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "Poap: not authorized to transfer");
         super.transferFrom(from, to, tokenId);
     }
 
@@ -265,9 +265,8 @@ contract Poap is
      */
     function burn(uint256 tokenId) public override {
         require(
-            //_isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "Sender doesn't have permission"
+            "Poap: not authorized to burn"
         );
         __burn(tokenId);
     }
@@ -392,11 +391,11 @@ contract Poap is
     }
 
     /*
-     * @dev Modifier to make a function callable only when the toke is not frozen.
+     * @dev Modifier to make a function callable only when the token is not frozen.
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenNotFrozen(uint256 tokenId) {
-        require(!this.isFrozen(tokenId), "Token is frozen");
+        require(!this.isFrozen(tokenId), "Poap: token is frozen");
         _;
     }
 
@@ -405,7 +404,7 @@ contract Poap is
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenFrozen(uint256 tokenId) {
-        require(this.isFrozen(tokenId), "Token is not frozen");
+        require(this.isFrozen(tokenId), "Poap: token is not frozen");
         _;
     }
 
@@ -432,9 +431,8 @@ contract Poap is
         uint256 tokenId
     ) public whenNotPaused whenNotFrozen(tokenId) {
         require(
-            //_isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "Sender doesn't have permission"
+            "Poap: not authorized to freeze"
         );
         _freeze(tokenId);
     }

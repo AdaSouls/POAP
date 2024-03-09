@@ -1,13 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-import {PoapRoles} from "./PoapRoles.sol";
-
 /**
  * @title Soulbound
  * @dev Base contract which allows children to implement a minimal soulbound token behaviour.
  */
-contract PoapConsensual is PoapRoles {
+interface IPoapSoulbound {
     /* @notice Emitted when the locking status is changed to locked.
      * @dev If a token is minted and the status is locked, this event should be emitted.
      * @param tokenId The identifier for a token.
@@ -25,11 +23,6 @@ contract PoapConsensual is PoapRoles {
      *about them do throw.
      * @param tokenId The identifier for an SBT.
      */
-    function locked(uint256) public pure returns (bool) {
-        return true;
-    }
-
-    // For future extensions
-    //uint256[50] private ______gap;
+    function locked(uint256) external view returns (bool);
 
 }
