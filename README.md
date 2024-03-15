@@ -26,6 +26,11 @@ As we said, for State Management on our POAPs we use Paima Engine, particularly 
 ## Automated Tests
 To test our smart contracts we will use [Hardhat](https://hardhat.org/) framework and [Mocha](https://mochajs.org/) libraries.
 
+To execute the tests run:
+
+```
+npx hardhat test
+```
 
 ## Get Started
 

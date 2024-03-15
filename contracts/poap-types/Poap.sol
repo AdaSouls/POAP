@@ -6,19 +6,19 @@ import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
-import {AnnotatedMintNft} from "./AnnotatedMintNft.sol";
-import {PoapRoles, AccessControl} from "./PoapRoles.sol";
-import {PoapPausable} from "./PoapPausable.sol";
-import {PoapSoulbound} from "./PoapSoulbound.sol";
+import {PoapStateful} from "../poap-extensions/PoapStateful.sol";
+import {PoapRoles, AccessControl} from "../poap-extensions/PoapRoles.sol";
+import {PoapPausable} from "../poap-extensions/PoapPausable.sol";
 
 // Desired Features
 // - Add Event
 // - Add Event Organizer
 // - Mint token for an event
 // - Batch Mint
-// - Burn Tokens (only admin?)
+// - Burn Tokens
 // - Pause contract (only admin)
 // - ERC721 full interface (base, metadata, enumerable)
+// - Stateful token
 
 contract Poap is
     Initializable,
@@ -26,8 +26,7 @@ contract Poap is
     ERC721Enumerable,
     PoapRoles,
     PoapPausable,
-    AnnotatedMintNft,
-    PoapSoulbound
+    PoapStateful
 {
     // Events
     event EventToken(uint256 indexed eventId, uint256 tokenId);
@@ -56,7 +55,7 @@ contract Poap is
         string memory symbol_,
         uint256 supply_,
         address owner_
-    ) AnnotatedMintNft(name_, symbol_, supply_, owner_) {}
+    ) PoapStateful(name_, symbol_, supply_, owner_) {}
 
     function initialize(
         string memory __baseURI,
@@ -100,7 +99,7 @@ contract Poap is
      */
     function tokenURI(
         uint256 tokenId
-    ) public view override(AnnotatedMintNft, ERC721) returns (string memory) {
+    ) public view override(PoapStateful, ERC721) returns (string memory) {
         uint eventId = _tokenEvent[tokenId];
         return
             _strConcat(
@@ -119,7 +118,7 @@ contract Poap is
     }
 
     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(lastId < newLastId);
+        require(lastId < newLastId, "Poap: lastId must be greater than newLastId");
         lastId = newLastId;
     }
 
@@ -142,7 +141,7 @@ contract Poap is
         address to,
         uint256 tokenId
     ) public override(ERC721, IERC721) whenNotPaused {
-        require(_isApprovedOrOwner(msg.sender, tokenId));
+        require(_isApprovedOrOwner(_msgSender(), tokenId), "Poap: not authorized to transfer");
         super.transferFrom(from, to, tokenId);
     }
 
@@ -269,8 +268,8 @@ contract Poap is
      */
     function burn(uint256 tokenId) public override {
         require(
-            _isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
-            "Sender doesn't have permission"
+            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
+            "Poap: not authorized to burn"
         );
         __burn(tokenId);
     }
@@ -395,11 +394,11 @@ contract Poap is
     }
 
     /*
-     * @dev Modifier to make a function callable only when the toke is not frozen.
+     * @dev Modifier to make a function callable only when the token is not frozen.
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenNotFrozen(uint256 tokenId) {
-        require(!this.isFrozen(tokenId), "Token is frozen");
+        require(!this.isFrozen(tokenId), "Poap: token is frozen");
         _;
     }
 
@@ -408,7 +407,7 @@ contract Poap is
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenFrozen(uint256 tokenId) {
-        require(this.isFrozen(tokenId), "Token is not frozen");
+        require(this.isFrozen(tokenId), "Poap: token is not frozen");
         _;
     }
 
@@ -435,8 +434,8 @@ contract Poap is
         uint256 tokenId
     ) public whenNotPaused whenNotFrozen(tokenId) {
         require(
-            _isApprovedOrOwner(msg.sender, tokenId) || isAdmin(msg.sender),
-            "Sender doesn't have permission"
+            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
+            "Poap: not authorized to freeze"
         );
         _freeze(tokenId);
     }
@@ -494,7 +493,7 @@ contract Poap is
     )
         public
         pure
-        override(ERC721, ERC721Enumerable, AccessControl, AnnotatedMintNft)
+        override(ERC721, ERC721Enumerable, AccessControl, PoapStateful)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
@@ -513,7 +512,7 @@ contract Poap is
         public
         view
         virtual
-        override(ERC721Enumerable, AnnotatedMintNft)
+        override(ERC721Enumerable, PoapStateful)
         returns (uint256)
     {
         return super.totalSupply();
@@ -524,7 +523,7 @@ contract Poap is
         internal
         view
         virtual
-        override(AnnotatedMintNft, ERC721)
+        override(PoapStateful, ERC721)
         returns (string memory)
     {
         return super._baseURI();

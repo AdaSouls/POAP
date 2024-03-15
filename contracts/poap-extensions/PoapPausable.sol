@@ -58,5 +58,5 @@ contract PoapPausable is Initializable, PoapRoles {
     }
 
     // For future extensions
-    uint256[50] private ______gap;
+    //uint256[50] private ______gap;
 }
