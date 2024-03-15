@@ -3,7 +3,8 @@ pragma solidity 0.8.24;
 
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import {ERC721} from "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import {IERC721, ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {ERC721Enumerable} from "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import {IERC721Metadata} from "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 import {AnnotatedMintNft} from "./AnnotatedMintNft.sol";
 import {PoapRoles, AccessControl} from "./PoapRoles.sol";
@@ -156,13 +157,19 @@ contract Poap is
      * @param to ( address ) The address to receive the ownership of the given token ID
      * @param tokenId ( uint256 ) ID of the token to be transferred
      */
-    function safeTransferFrom(
+    /*     function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId
-    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+    )
+        public
+        virtual
+        override(ERC721, IERC721)
+        whenNotPaused
+        whenNotFrozen(tokenId)
+    {
         super.safeTransferFrom(from, to, tokenId);
-    }
+    } */
 
     /*
      * @dev Safely transfers the ownership of a given token ID to another address (Implements ERC71)
@@ -181,18 +188,14 @@ contract Poap is
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+    )
+        public
+        virtual
+        override(ERC721, IERC721)
+        whenNotPaused
+        whenNotFrozen(tokenId)
+    {
         super.safeTransferFrom(from, to, tokenId, _data);
-    }
-
-    /*
-     * @dev Returns whether the specified token exists
-     * @param tokenId uint256 ID of the token to query the existence of
-     * @return bool whether the token exists
-     */
-    function _exists(uint256 tokenId) internal view override returns (bool) {
-        address owner = ownerOf(tokenId);
-        return owner != address(0);
     }
 
     /*
@@ -205,7 +208,7 @@ contract Poap is
     function _isApprovedOrOwner(
         address spender,
         uint256 tokenId
-    ) internal view override(ERC721) returns (bool) {
+    ) internal view returns (bool) {
         address owner = ownerOf(tokenId);
         return (spender == owner ||
             getApproved(tokenId) == spender ||
@@ -471,6 +474,21 @@ contract Poap is
     }
 
     // The following functions are overrides required by Solidity.
+    function _update(
+        address to,
+        uint256 tokenId,
+        address auth
+    ) internal override(ERC721, ERC721Enumerable) returns (address) {
+        return super._update(to, tokenId, auth);
+    }
+
+    function _increaseBalance(
+        address account,
+        uint128 value
+    ) internal override(ERC721, ERC721Enumerable) {
+        super._increaseBalance(account, value);
+    }
+
     function supportsInterface(
         bytes4 interfaceId
     )
@@ -482,14 +500,14 @@ contract Poap is
         return super.supportsInterface(interfaceId);
     }
 
-    function _beforeTokenTransfer(
+    /*     function _beforeTokenTransfer(
         address from,
         address to,
         uint256 firstTokenId,
         uint256 amount
     ) internal virtual override(ERC721, ERC721Enumerable) {
         super._beforeTokenTransfer(from, to, firstTokenId, amount);
-    }
+    } */
 
     function totalSupply()
         public

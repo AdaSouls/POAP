@@ -35,7 +35,10 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
 
     /// @dev Reverts if the `tokenId` does not exist (has not been minted).
     modifier onlyExistingTokenId(uint256 tokenId) {
-        require(_exists(tokenId), "AnnotatedMintNft: non-existent tokenId");
+        require(
+            _ownerOf(tokenId) != address(0),
+            "AnnotatedMintNft: non-existent tokenId"
+        );
         _;
     }
 
@@ -73,7 +76,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
         string memory symbol,
         uint256 supply,
         address owner
-    ) ERC721(name, symbol) {
+    ) ERC721(name, symbol) Ownable(_msgSender()) {
         maxSupply = supply;
         currentTokenId = 1;
         baseExtension = ".json";
@@ -188,7 +191,7 @@ contract AnnotatedMintNft is ERC165, ERC721, Ownable {
 
     /// @dev Returns true if specified `_tokenId` exists.
     function exists(uint256 _tokenId) external view returns (bool) {
-        return _exists(_tokenId);
+        return _ownerOf(_tokenId) != address(0);
     }
 
     /// @dev Returns true if `_account` is in the mapping of allowed `minters`.
