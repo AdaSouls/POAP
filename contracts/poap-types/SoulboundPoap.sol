@@ -28,8 +28,8 @@ contract SoulboundPoap is
     ERC721,
     ERC721Enumerable,
     PoapRoles,
-    PoapPausable,
     PoapStateful,
+    PoapPausable,
     IPoapSoulbound
 {
     // Events
@@ -288,7 +288,7 @@ contract SoulboundPoap is
         address to
     ) internal returns (bool) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        _mint(to, tokenId);
+        PoapStateful(address(this)).mint(to, "0x");
         _isLocked[tokenId] = true;
         emit Locked(tokenId);
         _tokenEvent[tokenId] = eventId;

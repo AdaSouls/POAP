@@ -282,7 +282,7 @@ contract Poap is
         address to
     ) internal returns (bool) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        _mint(to, tokenId);
+        PoapStateful(address(this)).mint(to, "0x");
         _tokenEvent[tokenId] = eventId;
         emit EventToken(eventId, tokenId);
         return true;
