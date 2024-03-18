@@ -41,7 +41,7 @@ contract SoulboundPoap is
     string private ___baseURI;
 
     // Last Used id (used to generate new ids)
-    uint256 private lastId;
+    //uint256 private lastId;
 
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
@@ -124,13 +124,13 @@ contract SoulboundPoap is
         ___baseURI = baseURI;
     }
 
-    function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
+/*     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
         require(
             lastId < newLastId,
             "SoulboundPoap: lastId must be greater than newLastId"
         );
         lastId = newLastId;
-    }
+    } */
 
     function approve(
         address to,
@@ -208,10 +208,12 @@ contract SoulboundPoap is
      */
     function mintToken(
         uint256 eventId,
-        address to
+        address to,
+        string memory initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
-        lastId += 1;
-        return _mintToken(eventId, lastId, to);
+        //lastId += 1;
+        //return _mintToken(eventId, lastId, to);
+        return _mintToken(eventId, to, initialData);
     }
 
     /*
@@ -222,12 +224,14 @@ contract SoulboundPoap is
      */
     function mintEventToManyUsers(
         uint256 eventId,
-        address[] memory to
+        address[] memory to,
+        string memory initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
-            _mintToken(eventId, lastId + 1 + i, to[i]);
+            //_mintToken(eventId, lastId + 1 + i, to[i]);
+            _mintToken(eventId, to[i], initialData);
         }
-        lastId += to.length;
+        //lastId += to.length;
         return true;
     }
 
@@ -239,12 +243,14 @@ contract SoulboundPoap is
      */
     function mintUserToManyEvents(
         uint256[] memory eventIds,
-        address to
+        address to,
+        string memory initialData
     ) public whenNotPaused onlyAdmin returns (bool) {
         for (uint256 i = 0; i < eventIds.length; ++i) {
-            _mintToken(eventIds[i], lastId + 1 + i, to);
+            //_mintToken(eventIds[i], lastId + 1 + i, to);
+            _mintToken(eventIds[i], to, initialData);
         }
-        lastId += eventIds.length;
+        //lastId += eventIds.length;
         return true;
     }
 
@@ -285,11 +291,11 @@ contract SoulboundPoap is
      */
     function _mintToken(
         uint256 eventId,
-        uint256 tokenId,
-        address to
+        address to,
+        string memory initialData
     ) internal returns (bool) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        PoapStateful(address(this)).mint(to, "0x");
+        uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
         _isLocked[tokenId] = true;
         emit Locked(tokenId);
         _tokenEvent[tokenId] = eventId;
