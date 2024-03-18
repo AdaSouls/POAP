@@ -2,11 +2,20 @@ const {
     loadFixture,
   } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
 async function deployPoapFixture() {
     const [owner, addr1, addr2] = await ethers.getSigners();
     const poapFactory = await ethers.getContractFactory("SoulboundPoap");
     const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10, owner.address);
+
+    return { soulboundPoapToken, owner, addr1, addr2 };
+}
+
+async function deployUncappedPoapFixture() {
+    const [owner, addr1, addr2] = await ethers.getSigners();
+    const poapFactory = await ethers.getContractFactory("SoulboundPoap");
+    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 0, owner.address);
 
     return { soulboundPoapToken, owner, addr1, addr2 };
 }
@@ -46,6 +55,15 @@ describe("Soulbound Poap contract", function () {
     
             const soulboundPoapMaxSupply = await soulboundPoapToken.maxSupply();
             expect(soulboundPoapMaxSupply).to.equal("10");
+        });
+
+        it("Should assign uncapped max supply correctly", async function () {
+    
+            const { soulboundPoapToken } = await loadFixture(deployUncappedPoapFixture);
+    
+            const soulboundPoapMaxSupply = await soulboundPoapToken.maxSupply();
+
+            expect(soulboundPoapMaxSupply).to.deep.equal(BigInt("115792089237316195423570985008687907853269984665640564039457584007913129639935"));
         });
 
         it("Should assign the right owner", async function () {
