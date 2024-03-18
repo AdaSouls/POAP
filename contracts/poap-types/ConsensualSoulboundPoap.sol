@@ -71,7 +71,9 @@ contract ConsensualSoulboundPoap is
         string memory symbol_,
         uint256 supply_,
         address owner_
-    ) PoapStateful(name_, symbol_, supply_, owner_) {}
+    ) PoapStateful(name_, symbol_, supply_, owner_) {
+        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+    }
 
     function initialize(
         string memory __baseURI,
@@ -85,10 +87,8 @@ contract ConsensualSoulboundPoap is
             _addAdmin(admins[i]);
         }
 
-        ___baseURI = __baseURI;
+        setBaseURI(__baseURI);
 
-        // register the supported interfaces to conform to ERC721 via ERC165
-        supportsInterface(INTERFACE_ID_ERC721_METADATA);
     }
 
     function tokenEvent(uint256 tokenId) public view returns (uint256) {

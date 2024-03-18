@@ -38,7 +38,7 @@ contract Poap is
     string private ___baseURI;
 
     // Last Used id (used to generate new ids)
-    uint256 private lastId;
+    //uint256 private lastId;
 
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
@@ -56,7 +56,9 @@ contract Poap is
         string memory symbol_,
         uint256 supply_,
         address owner_
-    ) PoapStateful(name_, symbol_, supply_, owner_) {}
+    ) PoapStateful(name_, symbol_, supply_, owner_) {
+        _grantRole(DEFAULT_ADMIN_ROLE, owner_);
+    }
 
     function initialize(
         string memory __baseURI,
@@ -70,22 +72,21 @@ contract Poap is
             _addAdmin(admins[i]);
         }
 
-        ___baseURI = __baseURI;
+        setBaseURI(__baseURI);
 
-        // register the supported interfaces to conform to ERC721 via ERC165
-        supportsInterface(INTERFACE_ID_ERC721_METADATA);
     }
 
+    /// @dev Gets the event ID for a given token ID.
+    /// @param tokenId Token ID.
     function tokenEvent(uint256 tokenId) public view returns (uint256) {
         return _tokenEvent[tokenId];
     }
 
-    /*
-     ** @dev Gets the token ID at a given index of the tokens list of the requested owner
-     ** @param owner address owning the tokens list to be accessed
-     ** @param index uint256 representing the index to be accessed of the requested tokens list
-     ** @return uint256 token ID at the given index of the tokens list owned by the requested address
-     */
+    /// @dev Gets the token ID at a given index of the tokens list of the requested owner
+    /// @param owner address owning the tokens list to be accessed
+    /// @param index uint256 representing the index to be accessed of the requested tokens list
+    /// @return tokenId token ID at the given index of the tokens list owned by the requested address
+    /// @return eventId token ID at the given index of the tokens list owned by the requested address
     function tokenDetailsOfOwnerByIndex(
         address owner,
         uint256 index
@@ -118,13 +119,13 @@ contract Poap is
         ___baseURI = baseURI;
     }
 
-    function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
+/*     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
         require(
             lastId < newLastId,
             "Poap: lastId must be greater than newLastId"
         );
         lastId = newLastId;
-    }
+    } */
 
     function approve(
         address to,
@@ -204,10 +205,12 @@ contract Poap is
      */
     function mintToken(
         uint256 eventId,
-        address to
+        address to,
+        string memory initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
-        lastId += 1;
-        return _mintToken(eventId, lastId, to);
+        //lastId += 1;
+        //return _mintToken(eventId, lastId, to, initialData);
+        return _mintToken(eventId, to, initialData);
     }
 
     /*
@@ -218,12 +221,14 @@ contract Poap is
      */
     function mintEventToManyUsers(
         uint256 eventId,
-        address[] memory to
+        address[] memory to,
+        string memory initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
-            _mintToken(eventId, lastId + 1 + i, to[i]);
+            //_mintToken(eventId, lastId + 1 + i, to[i], initialData);
+            _mintToken(eventId, to[i], initialData);
         }
-        lastId += to.length;
+        //lastId += to.length;
         return true;
     }
 
@@ -235,12 +240,14 @@ contract Poap is
      */
     function mintUserToManyEvents(
         uint256[] memory eventIds,
-        address to
+        address to,
+        string memory initialData
     ) public whenNotPaused onlyAdmin returns (bool) {
         for (uint256 i = 0; i < eventIds.length; ++i) {
-            _mintToken(eventIds[i], lastId + 1 + i, to);
+            //_mintToken(eventIds[i], lastId + 1 + i, to, initialData);
+            _mintToken(eventIds[i], to, initialData);
         }
-        lastId += eventIds.length;
+        //lastId += eventIds.length;
         return true;
     }
 
@@ -278,11 +285,12 @@ contract Poap is
      */
     function _mintToken(
         uint256 eventId,
-        uint256 tokenId,
-        address to
+        //uint256 tokenId,
+        address to,
+        string memory initialData
     ) internal returns (bool) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        PoapStateful(address(this)).mint(to, "0x");
+        uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
         _tokenEvent[tokenId] = eventId;
         emit EventToken(eventId, tokenId);
         return true;

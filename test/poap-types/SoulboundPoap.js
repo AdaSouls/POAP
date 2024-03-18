@@ -6,7 +6,7 @@ const { expect } = require("chai");
 async function deployPoapFixture() {
     const [owner, addr1, addr2] = await ethers.getSigners();
     const poapFactory = await ethers.getContractFactory("SoulboundPoap");
-    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10);
+    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10, owner.address);
 
     return { soulboundPoapToken, owner, addr1, addr2 };
 }
@@ -14,7 +14,7 @@ async function deployPoapFixture() {
 async function deployPoapFixtureAndInitialize() {
     const [owner, addr1, addr2] = await ethers.getSigners();
     const poapFactory = await ethers.getContractFactory("SoulboundPoap");
-    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10);
+    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10, owner.address);
     await soulboundPoapToken["initialize(string, address[])"]("https://ipfs.io/ipfs/QmQ8kV9JuhkiSt7Qp7HTsiyVUiaobFeTTyjK71q5k8e46w/", []);
 
     return { soulboundPoapToken, owner, addr1, addr2 };

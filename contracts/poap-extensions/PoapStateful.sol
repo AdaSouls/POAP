@@ -70,6 +70,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// Also sets `currentTokenId` to 1 and `baseExtension` to `".json"`.
     /// @param name Collection name.
     /// @param symbol Collection symbol.
+    /// @param supply Max supply of the collection | 0 for unlimited supply
     /// @param owner The owner of the contract, who will be able to execute
     constructor(
         string memory name,
@@ -77,7 +78,11 @@ contract PoapStateful is ERC165, ERC721, Ownable {
         uint256 supply,
         address owner
     ) ERC721(name, symbol) Ownable(_msgSender()) {
-        maxSupply = supply;
+        if (supply == 0) {
+            maxSupply = type(uint256).max;
+        } else {
+            maxSupply = supply;
+        }
         currentTokenId = 1;
         baseExtension = ".json";
         transferOwnership(owner);
