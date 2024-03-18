@@ -77,10 +77,8 @@ contract SoulboundPoap is
             _addAdmin(admins[i]);
         }
 
-        ___baseURI = __baseURI;
+        setBaseURI(__baseURI);
 
-        // register the supported interfaces to conform to ERC721 via ERC165
-        supportsInterface(INTERFACE_ID_ERC721_METADATA);
     }
 
     function tokenEvent(uint256 tokenId) public view returns (uint256) {
