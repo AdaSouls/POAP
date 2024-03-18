@@ -14,7 +14,7 @@ contract PoapRoles is Initializable, AccessControl {
 
     mapping(uint256 => mapping(address => bool)) private _eventMinters;
 
-    function initialize(address sender) public initializer {
+    function initialize(address sender) public onlyInitializing {
         if (!isAdmin(sender)) {
             _addAdmin(sender);
         }
