@@ -17,7 +17,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// @dev Total token supply, increased by minting and decreased by burning.
     uint256 public _totalSupply;
     /// @dev Maximum amount of tokens that is allowed to exist.
-    uint256 public maxSupply;
+    //uint256 public maxSupply;
     /// @dev Base extension that is used in the `tokenURI` function to form the end of the token URI.
     string public baseExtension;
 
@@ -49,10 +49,10 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     }
 
     /// @dev Emitted when max supply is updated from `oldMaxSupply` to `newMaxSupply`.
-    event UpdateMaxSupply(
+/*     event UpdateMaxSupply(
         uint256 indexed oldMaxSupply,
         uint256 indexed newMaxSupply
-    );
+    ); */
 
     /// @dev Emitted when `newMinter` is added to the mapping of allowed `minters`.
     event SetMinter(address indexed newMinter);
@@ -70,19 +70,18 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// Also sets `currentTokenId` to 1 and `baseExtension` to `".json"`.
     /// @param name Collection name.
     /// @param symbol Collection symbol.
-    /// @param supply Max supply of the collection | 0 for unlimited supply
     /// @param owner The owner of the contract, who will be able to execute
     constructor(
         string memory name,
         string memory symbol,
-        uint256 supply,
+        //uint256 supply,
         address owner
     ) ERC721(name, symbol) Ownable(_msgSender()) {
-        if (supply == 0) {
+/*         if (supply == 0) {
             maxSupply = type(uint256).max;
         } else {
             maxSupply = supply;
-        }
+        } */
         currentTokenId = 1;
         baseExtension = ".json";
         transferOwnership(owner);
@@ -105,7 +104,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
         address _to,
         string calldata initialData
     ) external canMint returns (uint256) {
-        require(maxSupply > _totalSupply, "PoapStateful: max supply reached");
+        //require(maxSupply > _totalSupply, "PoapStateful: max supply reached");
         require(_to != address(0), "PoapStateful: zero receiver address");
 
         uint256 tokenId = currentTokenId;
@@ -180,7 +179,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// @dev Sets `_maxSupply` as the `maxSupply` of the NFT.
     /// Callable only by the contract owner.
     /// Emits the `UpdateMaxSupply` event.
-    function updateMaxSupply(uint256 _maxSupply) external onlyOwner {
+/*     function updateMaxSupply(uint256 _maxSupply) external onlyOwner {
         uint256 oldMaxSupply = maxSupply;
         require(
             _maxSupply > oldMaxSupply,
@@ -189,7 +188,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
 
         maxSupply = _maxSupply;
         emit UpdateMaxSupply(oldMaxSupply, _maxSupply);
-    }
+    } */
 
     /// @dev Returns true if specified `_tokenId` exists.
     function exists(uint256 _tokenId) external view returns (bool) {

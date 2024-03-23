@@ -87,6 +87,4 @@ contract PoapRoles is Initializable, AccessControl {
         emit AdminRemoved(account);
     }
 
-    // For future extensions
-    //uint256[50] private ______gap;
 }

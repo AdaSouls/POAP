@@ -60,9 +60,9 @@ contract SoulboundPoap is
     constructor(
         string memory name_,
         string memory symbol_,
-        uint256 supply_,
+        //uint256 supply_,
         address owner_
-    ) PoapStateful(name_, symbol_, supply_, owner_) {
+    ) PoapStateful(name_, symbol_, owner_) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
     }
 

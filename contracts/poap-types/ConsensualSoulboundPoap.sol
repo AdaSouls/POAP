@@ -69,9 +69,9 @@ contract ConsensualSoulboundPoap is
     constructor(
         string memory name_,
         string memory symbol_,
-        uint256 supply_,
+        //uint256 supply_,
         address owner_
-    ) PoapStateful(name_, symbol_, supply_, owner_) {
+    ) PoapStateful(name_, symbol_, owner_) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
     }
 
@@ -246,7 +246,7 @@ contract ConsensualSoulboundPoap is
         //mintToken(eventId, to, intialData);
         uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
 
-        // remember is the token is locked
+        // remember if the token is locked
         _isLocked[tokenId] = isLocked;
 
         // remember the `burnAuth` for this token

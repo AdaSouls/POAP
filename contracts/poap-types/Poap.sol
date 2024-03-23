@@ -37,8 +37,11 @@ contract Poap is
     // Base token URI
     string private ___baseURI;
 
-    // Last Used id (used to generate new ids)
-    //uint256 private lastId;
+    // Total supply for each EventId
+    mapping(uint256 => uint256) private _eventTotalSupply;
+
+    // Max supply for each EventId
+    mapping(uint256 => uint256) private _eventMaxSupply;
 
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
@@ -54,9 +57,9 @@ contract Poap is
     constructor(
         string memory name_,
         string memory symbol_,
-        uint256 supply_,
+        //uint256 supply_,
         address owner_
-    ) PoapStateful(name_, symbol_, supply_, owner_) {
+    ) PoapStateful(name_, symbol_, owner_) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
     }
 
@@ -198,6 +201,25 @@ contract Poap is
     }
 
     /*
+     * @dev Function to create events with a max supply
+     * @param eventId EventId for the new token
+     * @param to The address that will receive the minted tokens.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function createEventId(
+        uint256 eventId,
+        uint256 maxSupply
+    ) public whenNotPaused onlyAdmin returns (bool) {
+        require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
+        if (maxSupply == 0) {
+            _eventMaxSupply[eventId] = type(uint256).max;
+        } else {
+            _eventMaxSupply[eventId] = maxSupply;
+        }
+        return true;
+    }
+
+    /*
      * @dev Function to mint tokens
      * @param eventId EventId for the new token
      * @param to The address that will receive the minted tokens.
@@ -208,8 +230,7 @@ contract Poap is
         address to,
         string memory initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
-        //lastId += 1;
-        //return _mintToken(eventId, lastId, to, initialData);
+        require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
         return _mintToken(eventId, to, initialData);
     }
 
@@ -285,13 +306,14 @@ contract Poap is
      */
     function _mintToken(
         uint256 eventId,
-        //uint256 tokenId,
         address to,
         string memory initialData
     ) internal returns (bool) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
+        require(_eventTotalSupply[eventId] < _eventMaxSupply[eventId]);
         uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
         _tokenEvent[tokenId] = eventId;
+        _eventTotalSupply[eventId]++;
         emit EventToken(eventId, tokenId);
         return true;
     }
