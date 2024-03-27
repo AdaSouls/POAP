@@ -7,15 +7,7 @@ const { ethers } = require("hardhat");
 async function deployPoapFixture() {
     const [owner, addr1, addr2] = await ethers.getSigners();
     const poapFactory = await ethers.getContractFactory("SoulboundPoap");
-    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10, owner.address);
-
-    return { soulboundPoapToken, owner, addr1, addr2 };
-}
-
-async function deployUncappedPoapFixture() {
-    const [owner, addr1, addr2] = await ethers.getSigners();
-    const poapFactory = await ethers.getContractFactory("SoulboundPoap");
-    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 0, owner.address);
+    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", owner.address);
 
     return { soulboundPoapToken, owner, addr1, addr2 };
 }
@@ -23,7 +15,7 @@ async function deployUncappedPoapFixture() {
 async function deployPoapFixtureAndInitialize() {
     const [owner, addr1, addr2] = await ethers.getSigners();
     const poapFactory = await ethers.getContractFactory("SoulboundPoap");
-    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", 10, owner.address);
+    const soulboundPoapToken = await poapFactory.deploy("Test Soulbound Poap", "TSPOAP", owner.address);
     await soulboundPoapToken["initialize(string, address[])"]("https://ipfs.io/ipfs/QmQ8kV9JuhkiSt7Qp7HTsiyVUiaobFeTTyjK71q5k8e46w/", []);
 
     return { soulboundPoapToken, owner, addr1, addr2 };
@@ -47,23 +39,6 @@ describe("Soulbound Poap contract", function () {
     
             const soulboundPoapSymbol = await soulboundPoapToken.symbol();
             expect(soulboundPoapSymbol).to.equal("TSPOAP");
-        });
-
-        it("Should assign the right max supply", async function () {
-    
-            const { soulboundPoapToken } = await loadFixture(deployPoapFixture);
-    
-            const soulboundPoapMaxSupply = await soulboundPoapToken.maxSupply();
-            expect(soulboundPoapMaxSupply).to.equal("10");
-        });
-
-        it("Should assign uncapped max supply correctly", async function () {
-    
-            const { soulboundPoapToken } = await loadFixture(deployUncappedPoapFixture);
-    
-            const soulboundPoapMaxSupply = await soulboundPoapToken.maxSupply();
-
-            expect(soulboundPoapMaxSupply).to.deep.equal(BigInt("115792089237316195423570985008687907853269984665640564039457584007913129639935"));
         });
 
         it("Should assign the right owner", async function () {
