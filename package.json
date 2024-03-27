@@ -1,7 +1,7 @@
 {
   "name": "adasouls-poap",
   "version": "1.0.0",
-  "description": "A fork of the Proof of Attendance Protocol that adds Soulbound and Stateful capabilities to its badges.",
+  "description": "A fork of the Proof of Attendance Protocol that introduces Soulbound and Stateful capabilities to its badges.",
   "main": "index.js",
   "scripts": {
     "test": "npx hardhat test",

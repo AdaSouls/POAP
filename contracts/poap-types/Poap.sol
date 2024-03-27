@@ -76,7 +76,6 @@ contract Poap is
         }
 
         setBaseURI(__baseURI);
-
     }
 
     /// @dev Gets the event ID for a given token ID.
@@ -121,14 +120,6 @@ contract Poap is
     ) public override onlyAdmin whenNotPaused {
         ___baseURI = baseURI;
     }
-
-/*     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(
-            lastId < newLastId,
-            "Poap: lastId must be greater than newLastId"
-        );
-        lastId = newLastId;
-    } */
 
     function approve(
         address to,
@@ -208,7 +199,8 @@ contract Poap is
      */
     function createEventId(
         uint256 eventId,
-        uint256 maxSupply
+        uint256 maxSupply,
+        address eventOrganizer
     ) public whenNotPaused onlyAdmin returns (bool) {
         require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
         if (maxSupply == 0) {
@@ -216,6 +208,7 @@ contract Poap is
         } else {
             _eventMaxSupply[eventId] = maxSupply;
         }
+        addEventMinter(eventId, eventOrganizer);
         return true;
     }
 
@@ -272,13 +265,21 @@ contract Poap is
         return true;
     }
 
+    function eventMaxSupply(uint256 eventId) public view returns (uint256) {
+        return _eventMaxSupply[eventId];
+    }
+
+    function eventTotalSupply(uint256 eventId) public view returns (uint256) {
+        return _eventTotalSupply[eventId];
+    }
+
     /*
      * @dev Burns a specific ERC721 token.
      * @param tokenId uint256 id of the ERC721 token to be burned.
      */
     function burn(uint256 tokenId) public override {
         require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
+            _isApprovedOrOwner(_msgSender(), tokenId),
             "Poap: not authorized to burn"
         );
         __burn(tokenId);

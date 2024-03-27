@@ -125,9 +125,82 @@ describe("Poap contract", function () {
 
     describe("Functions", function () {
 
-        describe("mintToken", function () {
+        describe("createEventId", function () {
 
-        
+            it("Should only be callable by the admin", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+    
+                await expect(poapToken.connect(addr1).createEventId(1, 0, addr2.address)).to.be.reverted;
+                
+                await expect(poapToken.createEventId(1, 0, addr2.address)).to.be.fulfilled;
+    
+            });
+
+            it("Should only be callable when contract is not paused", async function () {
+    
+                const { poapToken, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+                
+                await poapToken.pause();
+                
+                await expect(poapToken.createEventId(1, 0, addr2.address)).to.be.reverted;
+                
+                await poapToken.unpause();
+
+                await expect(poapToken.createEventId(1, 0, addr2.address)).to.be.fulfilled;
+    
+            });
+
+            it("Should not allow the creation of events with same id", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.revertedWith("Poap: event already created");
+
+                await expect(poapToken.createEventId(2, 100, addr2.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 100, addr2.address)).to.be.revertedWith("Poap: event already created");
+
+            });
+
+            it("Should allow the creation of events with limited supply of tokens", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 10, addr1.address)).to.be.fulfilled;
+
+                const maxSupply = await poapToken.eventMaxSupply(1);
+
+                expect(maxSupply).to.equal(10);
+    
+            });
+
+            it("Should allow the creation of events with unlimited supply of tokens", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+
+                const maxSupply = await poapToken.eventMaxSupply(1);
+
+                expect(maxSupply).to.equal(BigInt("115792089237316195423570985008687907853269984665640564039457584007913129639935"));
+    
+            });
+
+            it("Should add the event organizer as the initial minter of the event", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+
+                const eventOrganizer = await poapToken.isEventMinter(1, addr1.address)
+                
+                expect(eventOrganizer).to.be.true;
+
+            });
+
         })
 
     })
