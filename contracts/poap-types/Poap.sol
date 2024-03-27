@@ -23,7 +23,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract Poap is
     Initializable,
-    ERC721,
     ERC721Enumerable,
     PoapRoles,
     PoapPausable,
@@ -209,6 +208,7 @@ contract Poap is
             _eventMaxSupply[eventId] = maxSupply;
         }
         addEventMinter(eventId, eventOrganizer);
+        PoapStateful.setMinter(eventOrganizer);
         return true;
     }
 
@@ -221,8 +221,8 @@ contract Poap is
     function mintToken(
         uint256 eventId,
         address to,
-        string memory initialData
-    ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
+        string calldata initialData
+    ) public whenNotPaused onlyEventMinter(eventId) returns (uint256) {
         require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
         return _mintToken(eventId, to, initialData);
     }
@@ -236,7 +236,7 @@ contract Poap is
     function mintEventToManyUsers(
         uint256 eventId,
         address[] memory to,
-        string memory initialData
+        string calldata initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
             //_mintToken(eventId, lastId + 1 + i, to[i], initialData);
@@ -255,13 +255,11 @@ contract Poap is
     function mintUserToManyEvents(
         uint256[] memory eventIds,
         address to,
-        string memory initialData
+        string calldata initialData
     ) public whenNotPaused onlyAdmin returns (bool) {
         for (uint256 i = 0; i < eventIds.length; ++i) {
-            //_mintToken(eventIds[i], lastId + 1 + i, to, initialData);
             _mintToken(eventIds[i], to, initialData);
         }
-        //lastId += eventIds.length;
         return true;
     }
 
@@ -308,15 +306,19 @@ contract Poap is
     function _mintToken(
         uint256 eventId,
         address to,
-        string memory initialData
-    ) internal returns (bool) {
+        string calldata initialData
+    ) internal returns (uint256) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        require(_eventTotalSupply[eventId] < _eventMaxSupply[eventId]);
-        uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
+        require(
+            _eventTotalSupply[eventId] < _eventMaxSupply[eventId],
+            "Poap: max supply reached for event"
+        );
+        uint256 tokenId = PoapStateful.mint(to, initialData);
+        //uint256 tokenId = mint(to, initialData);
         _tokenEvent[tokenId] = eventId;
         _eventTotalSupply[eventId]++;
         emit EventToken(eventId, tokenId);
-        return true;
+        return tokenId;
     }
 
     function removeAdmin(address account) public onlyAdmin {
@@ -441,7 +443,7 @@ contract Poap is
     )
         public
         pure
-        override(ERC721, ERC721Enumerable, AccessControl, PoapStateful)
+        override(ERC721Enumerable, AccessControl, PoapStateful)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

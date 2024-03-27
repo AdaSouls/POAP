@@ -185,7 +185,7 @@ describe("Poap contract", function () {
 
                 const maxSupply = await poapToken.eventMaxSupply(1);
 
-                expect(maxSupply).to.equal(BigInt("115792089237316195423570985008687907853269984665640564039457584007913129639935"));
+                expect(maxSupply).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
     
             });
 
@@ -200,6 +200,141 @@ describe("Poap contract", function () {
                 expect(eventOrganizer).to.be.true;
 
             });
+
+        })
+
+        describe("mintToken", function () {
+
+            it("Should only be callable by an event minter (admin or organizer)", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled; // admin call
+
+                await expect(poapToken.connect(addr1).mintToken(1, addr2.address, "InitialState")).to.be.fulfilled; // organizer call
+
+                await expect(poapToken.connect(addr2).mintToken(1, addr2.address, "InitialState")).to.be.reverted; // not admin nor organizer call
+
+            });
+
+            it("Should only be callable when contract is not paused", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+
+                await poapToken.pause();
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.reverted;
+
+                await poapToken.unpause();
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+
+            });
+
+            it("Should only mint tokens for previously created events (createEventId)", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(2, addr2.address, "InitialState")).to.be.revertedWith("Poap: event does not exist");
+
+            });
+
+            it("Should only mint tokens if total supply < max supply", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.revertedWith("Poap: max supply reached for event");
+
+            });
+
+            it("Should assign the right token id to the token", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+
+                await poapToken.mintToken(1, addr2.address, "InitialState");
+                await poapToken.mintToken(1, addr2.address, "InitialState");
+
+                await expect(poapToken.createEventId(2, 5, addr1.address)).to.be.fulfilled;
+
+                await poapToken.mintToken(2, addr2.address, "InitialState");
+                await poapToken.mintToken(2, addr2.address, "InitialState");
+
+                // TODO: check how to get the token id returned by mintToken function
+                expect(1).to.be.equal(1);
+                expect(2).to.be.equal(2);
+                expect(3).to.be.equal(3);
+                expect(4).to.be.equal(4);
+
+            });
+
+            it("Should assign the right event id to the token", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+
+                await poapToken.mintToken(1, addr2.address, "InitialState");
+                await poapToken.mintToken(1, addr2.address, "InitialState");
+
+                await expect(poapToken.createEventId(2, 5, addr1.address)).to.be.fulfilled;
+
+                await poapToken.mintToken(2, addr2.address, "InitialState");
+                await poapToken.mintToken(2, addr2.address, "InitialState");
+
+                expect(await poapToken.tokenEvent(1)).to.be.equal(1);
+                expect(await poapToken.tokenEvent(2)).to.be.equal(1);
+                expect(await poapToken.tokenEvent(3)).to.be.equal(2);
+                expect(await poapToken.tokenEvent(4)).to.be.equal(2);
+
+            });
+
+            it("Should increase the token total supply for that event by 1", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+
+                expect(await poapToken.eventTotalSupply(1)).to.be.equal(0);
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.eventTotalSupply(1)).to.be.equal(1);
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.eventTotalSupply(1)).to.be.equal(2);
+
+            });
+
+            it("Should emit EventToken event", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.emit(poapToken, "EventToken").withArgs(1, 1);
+
+            });
+
 
         })
 

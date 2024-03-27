@@ -24,10 +24,10 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// @dev Returns true for addresses that are allowed to mint this token.
     mapping(address => bool) public minters;
 
-    /// @dev Reverts if `msg.sender` is neither a minter nor the contract owner.
+    /// @dev Reverts if `_msgSender()` is neither a minter nor the contract owner.
     modifier canMint() {
         require(
-            isMinter(msg.sender) || owner() == msg.sender,
+            isMinter(_msgSender()) || owner() == _msgSender(),
             "PoapStateful: not authorized to mint"
         );
         _;
@@ -42,17 +42,11 @@ contract PoapStateful is ERC165, ERC721, Ownable {
         _;
     }
 
-    /// @dev Reverts if `msg.sender` is not the specified token's owner.
+    /// @dev Reverts if `_msgSender()` is not the specified token's owner.
     modifier onlyTokenOwner(uint256 tokenId) {
-        require(msg.sender == ownerOf(tokenId), "PoapStateful: not owner");
+        require(_msgSender() == ownerOf(tokenId), "PoapStateful: not owner");
         _;
     }
-
-    /// @dev Emitted when max supply is updated from `oldMaxSupply` to `newMaxSupply`.
-/*     event UpdateMaxSupply(
-        uint256 indexed oldMaxSupply,
-        uint256 indexed newMaxSupply
-    ); */
 
     /// @dev Emitted when `newMinter` is added to the mapping of allowed `minters`.
     event SetMinter(address indexed newMinter);
@@ -77,11 +71,6 @@ contract PoapStateful is ERC165, ERC721, Ownable {
         //uint256 supply,
         address owner
     ) ERC721(name, symbol) Ownable(_msgSender()) {
-/*         if (supply == 0) {
-            maxSupply = type(uint256).max;
-        } else {
-            maxSupply = supply;
-        } */
         currentTokenId = 1;
         baseExtension = ".json";
         transferOwnership(owner);
@@ -103,7 +92,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     function mint(
         address _to,
         string calldata initialData
-    ) external canMint returns (uint256) {
+    ) public canMint returns (uint256) {
         //require(maxSupply > _totalSupply, "PoapStateful: max supply reached");
         require(_to != address(0), "PoapStateful: zero receiver address");
 
@@ -129,7 +118,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// @dev Adds `_minter` to the mapping of allowed `minters` of this NFT.
     /// Callable only by the contract owner.
     /// Emits the `SetMinter` event.
-    function setMinter(address _minter) external onlyOwner {
+    function setMinter(address _minter) public onlyOwner {
         require(_minter != address(0), "PoapStateful: invalid minter");
 
         minters[_minter] = true;
@@ -179,7 +168,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// @dev Sets `_maxSupply` as the `maxSupply` of the NFT.
     /// Callable only by the contract owner.
     /// Emits the `UpdateMaxSupply` event.
-/*     function updateMaxSupply(uint256 _maxSupply) external onlyOwner {
+    /*     function updateMaxSupply(uint256 _maxSupply) external onlyOwner {
         uint256 oldMaxSupply = maxSupply;
         require(
             _maxSupply > oldMaxSupply,
