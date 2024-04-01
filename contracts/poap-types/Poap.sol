@@ -42,6 +42,9 @@ contract Poap is
     // Max supply for each EventId
     mapping(uint256 => uint256) private _eventMaxSupply;
 
+    // Mint expiration timestamp for each EventId
+    mapping(uint256 => uint256) private _eventMintExpiration;
+
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
 
@@ -199,14 +202,19 @@ contract Poap is
     function createEventId(
         uint256 eventId,
         uint256 maxSupply,
+        uint256 mintExpiration,
         address eventOrganizer
     ) public whenNotPaused onlyAdmin returns (bool) {
         require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
+        if (mintExpiration > 0) {
+            require(mintExpiration > block.timestamp + 3 days, "Poap: mint expiration must be higher than current timestamp plus 3 days");
+        }
         if (maxSupply == 0) {
             _eventMaxSupply[eventId] = type(uint256).max;
         } else {
             _eventMaxSupply[eventId] = maxSupply;
         }
+        _eventMintExpiration[eventId] = mintExpiration;
         addEventMinter(eventId, eventOrganizer);
         PoapStateful.setMinter(eventOrganizer);
         return true;
@@ -224,6 +232,9 @@ contract Poap is
         string calldata initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (uint256) {
         require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
+        if (_eventMintExpiration[eventId] > 0) {
+            require(_eventMintExpiration[eventId] >= block.timestamp, "Poap: event mint has expired");
+        }
         return _mintToken(eventId, to, initialData);
     }
 

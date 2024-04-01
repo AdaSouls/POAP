@@ -1,8 +1,12 @@
 const {
     loadFixture,
+    time,
   } = require("@nomicfoundation/hardhat-toolbox/network-helpers");
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+
+const sevenDays = 7 * 24 * 60 * 60;
+const eightDays = 8 * 24 * 60 * 60;
 
 async function deployPoapFixture() {
     const [owner, addr1, addr2] = await ethers.getSigners();
@@ -130,10 +134,12 @@ describe("Poap contract", function () {
             it("Should only be callable by the admin", async function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
-    
-                await expect(poapToken.connect(addr1).createEventId(1, 0, addr2.address)).to.be.reverted;
                 
-                await expect(poapToken.createEventId(1, 0, addr2.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.connect(addr1).createEventId(1, 0, latestPlusSevenDays, addr2.address)).to.be.reverted;
+                
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
     
             });
 
@@ -143,11 +149,13 @@ describe("Poap contract", function () {
                 
                 await poapToken.pause();
                 
-                await expect(poapToken.createEventId(1, 0, addr2.address)).to.be.reverted;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr2.address)).to.be.reverted;
                 
                 await poapToken.unpause();
 
-                await expect(poapToken.createEventId(1, 0, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
     
             });
 
@@ -155,13 +163,51 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.revertedWith("Poap: event already created");
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.createEventId(2, 100, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.revertedWith("Poap: event already created");
 
-                await expect(poapToken.createEventId(2, 100, addr2.address)).to.be.revertedWith("Poap: event already created");
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr2.address)).to.be.revertedWith("Poap: event already created");
+
+            });
+
+            it("Should not allow the creation of events with mint expiration date less than 3 days from now", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                const latest = await time.latest();
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 0, latest, addr2.address)).to.be.revertedWith("Poap: mint expiration must be higher than current timestamp plus 3 days");
+
+            });
+
+            it("Should allow the creation of events with mint expiration date 3 days from now", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 0, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+
+            });
+
+            it("Should allow the creation of events with no mint expiration date", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.createEventId(1, 0, 0, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 0, 0, addr2.address)).to.be.fulfilled;
 
             });
 
@@ -169,7 +215,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 10, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 const maxSupply = await poapToken.eventMaxSupply(1);
 
@@ -181,7 +229,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 const maxSupply = await poapToken.eventMaxSupply(1);
 
@@ -193,7 +243,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 const eventOrganizer = await poapToken.isEventMinter(1, addr1.address)
                 
@@ -209,7 +261,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled; // admin call
 
@@ -223,7 +277,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
 
@@ -241,7 +297,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 0, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
 
@@ -249,11 +307,33 @@ describe("Poap contract", function () {
 
             });
 
+            it("Should only mint tokens if mint expiration date is not met (or not set)", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+                const latestPlusEightDays = await time.latest() + eightDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 0, 0, addr2.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(2, addr2.address, "InitialState")).to.be.fulfilled;
+
+                await time.increaseTo(latestPlusEightDays);
+
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.revertedWith("Poap: event mint has expired");
+                await expect(poapToken.mintToken(2, addr2.address, "InitialState")).to.be.fulfilled;
+
+            });
+
             it("Should only mint tokens if total supply < max supply", async function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
                 await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
@@ -268,12 +348,14 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await poapToken.mintToken(1, addr2.address, "InitialState");
                 await poapToken.mintToken(1, addr2.address, "InitialState");
 
-                await expect(poapToken.createEventId(2, 5, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await poapToken.mintToken(2, addr2.address, "InitialState");
                 await poapToken.mintToken(2, addr2.address, "InitialState");
@@ -290,12 +372,14 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await poapToken.mintToken(1, addr2.address, "InitialState");
                 await poapToken.mintToken(1, addr2.address, "InitialState");
 
-                await expect(poapToken.createEventId(2, 5, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await poapToken.mintToken(2, addr2.address, "InitialState");
                 await poapToken.mintToken(2, addr2.address, "InitialState");
@@ -311,7 +395,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 expect(await poapToken.eventTotalSupply(1)).to.be.equal(0);
 
@@ -329,7 +415,9 @@ describe("Poap contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.createEventId(1, 5, addr1.address)).to.be.fulfilled;
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintToken(1, addr2.address, "InitialState")).to.emit(poapToken, "EventToken").withArgs(1, 1);
 
