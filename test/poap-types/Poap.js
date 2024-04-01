@@ -426,6 +426,15 @@ describe("Poap contract", function () {
 
         })
 
+        // TODO: mintEventToManyUsers
+        // TODO: mintUserToManyEvents
+        // TODO: eventMaxSupply
+        // TODO: eventTotalSupply
+        // TODO: burn
+        // TODO: removeAdmin
+        // TODO: freeze / unfreeze / setFreezeDuration / getFreezeTime / isFrozen
+        // TODO: totalSupply
+
     })
 
 
