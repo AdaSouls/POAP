@@ -231,7 +231,6 @@ contract Poap is
         address to,
         string calldata initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (uint256) {
-        require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
         return _mintToken(eventId, to, initialData);
     }
 
@@ -317,6 +316,7 @@ contract Poap is
         string calldata initialData
     ) internal returns (uint256) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
+        require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
         if (_eventMintExpiration[eventId] > 0) {
             require(_eventMintExpiration[eventId] >= block.timestamp, "Poap: event mint has expired");
         }
