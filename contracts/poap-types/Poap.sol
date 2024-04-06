@@ -300,6 +300,9 @@ contract Poap is
     function __burn(uint256 tokenId) internal {
         super._burn(tokenId);
 
+        uint256 eventId = _tokenEvent[tokenId];
+        _eventTotalSupply[eventId]--;
+        _totalSupply--;
         delete _tokenEvent[tokenId];
     }
 

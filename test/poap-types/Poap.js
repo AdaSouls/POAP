@@ -997,7 +997,7 @@ describe("Poap contract", function () {
 
             it("Should retrieve 0 as total supply if no poaps have been minted", async function () {
     
-                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
 
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
@@ -1010,8 +1010,71 @@ describe("Poap contract", function () {
             });
 
         })
-        
-        // TODO: burn
+
+        describe("burn", function () {
+
+            it("Should only be callable by approved or owner and not by an admin", async function () {
+    
+                const { poapToken, owner, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.burn(1)).to.be.revertedWith("Poap: not authorized to burn");
+
+                await expect(poapToken.connect(addr1).approve(owner.address, 1)).to.be.fulfilled;
+
+                await expect(poapToken.burn(1)).to.be.fulfilled;
+
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.connect(addr1).burn(2)).to.be.fulfilled;
+
+            });
+
+            it("Should decrease the total supply for the event", async function () {
+
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.eventTotalSupply(1)).to.be.equal(2);
+
+                await expect(poapToken.connect(addr1).burn(2)).to.be.fulfilled;
+
+                expect(await poapToken.eventTotalSupply(1)).to.be.equal(1);                
+
+            });
+
+            it("Should decrease the total supply for all poaps", async function () {
+
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(2, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintToken(2, addr1.address, "InitialState")).to.be.fulfilled;
+
+
+                expect(await poapToken.totalSupply()).to.be.equal(4);
+
+                await expect(poapToken.connect(addr1).burn(2)).to.be.fulfilled;
+
+                expect(await poapToken.totalSupply()).to.be.equal(3);
+
+            });
+
+        })
         // TODO: removeAdmin
         // TODO: freeze / unfreeze / setFreezeDuration / getFreezeTime / isFrozen
         
