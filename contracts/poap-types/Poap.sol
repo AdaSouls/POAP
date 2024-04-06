@@ -59,7 +59,6 @@ contract Poap is
     constructor(
         string memory name_,
         string memory symbol_,
-        //uint256 supply_,
         address owner_
     ) PoapStateful(name_, symbol_, owner_) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
@@ -141,7 +140,7 @@ contract Poap is
         address from,
         address to,
         uint256 tokenId
-    ) public override(ERC721, IERC721) whenNotPaused {
+    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
             "Poap: not authorized to transfer"
@@ -246,10 +245,8 @@ contract Poap is
         string calldata initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
-            //_mintToken(eventId, lastId + 1 + i, to[i], initialData);
             _mintToken(eventId, to[i], initialData);
         }
-        //lastId += to.length;
         return true;
     }
 
@@ -328,7 +325,6 @@ contract Poap is
             "Poap: max supply reached for event"
         );
         uint256 tokenId = PoapStateful.mint(to, initialData);
-        //uint256 tokenId = mint(to, initialData);
         _tokenEvent[tokenId] = eventId;
         _eventTotalSupply[eventId]++;
         emit EventToken(eventId, tokenId);

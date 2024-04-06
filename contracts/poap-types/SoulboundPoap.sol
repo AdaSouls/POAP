@@ -25,11 +25,10 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract SoulboundPoap is
     Initializable,
-    ERC721,
     ERC721Enumerable,
     PoapRoles,
-    PoapStateful,
     PoapPausable,
+    PoapStateful,
     IPoapSoulbound
 {
     // Events
@@ -40,8 +39,14 @@ contract SoulboundPoap is
     // Base token URI
     string private ___baseURI;
 
-    // Last Used id (used to generate new ids)
-    //uint256 private lastId;
+    // Total supply for each EventId
+    mapping(uint256 => uint256) private _eventTotalSupply;
+
+    // Max supply for each EventId
+    mapping(uint256 => uint256) private _eventMaxSupply;
+
+    // Mint expiration timestamp for each EventId
+    mapping(uint256 => uint256) private _eventMintExpiration;
 
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
@@ -60,7 +65,6 @@ contract SoulboundPoap is
     constructor(
         string memory name_,
         string memory symbol_,
-        //uint256 supply_,
         address owner_
     ) PoapStateful(name_, symbol_, owner_) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
@@ -69,7 +73,7 @@ contract SoulboundPoap is
     function initialize(
         string memory __baseURI,
         address[] memory admins
-    ) public initializer onlyOwner {
+    ) public initializer {
         PoapRoles.initialize(_msgSender());
         PoapPausable.initialize();
 
@@ -79,19 +83,19 @@ contract SoulboundPoap is
         }
 
         setBaseURI(__baseURI);
-
     }
 
+    /// @dev Gets the event ID for a given token ID.
+    /// @param tokenId Token ID.
     function tokenEvent(uint256 tokenId) public view returns (uint256) {
         return _tokenEvent[tokenId];
     }
 
-    /*
-     ** @dev Gets the token ID at a given index of the tokens list of the requested owner
-     ** @param owner address owning the tokens list to be accessed
-     ** @param index uint256 representing the index to be accessed of the requested tokens list
-     ** @return uint256 token ID at the given index of the tokens list owned by the requested address
-     */
+    /// @dev Gets the token ID at a given index of the tokens list of the requested owner
+    /// @param owner address owning the tokens list to be accessed
+    /// @param index uint256 representing the index to be accessed of the requested tokens list
+    /// @return tokenId token ID at the given index of the tokens list owned by the requested address
+    /// @return eventId token ID at the given index of the tokens list owned by the requested address
     function tokenDetailsOfOwnerByIndex(
         address owner,
         uint256 index
@@ -150,7 +154,7 @@ contract SoulboundPoap is
         address from,
         address to,
         uint256 tokenId
-    ) public override(ERC721, IERC721) whenNotPaused {
+    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
         require(
             !locked(tokenId),
             "SoulboundPoap: soulbound is locked to transfer"
@@ -201,6 +205,33 @@ contract SoulboundPoap is
     }
 
     /*
+     * @dev Function to create events with a max supply
+     * @param eventId EventId for the new token
+     * @param to The address that will receive the minted tokens.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function createEventId(
+        uint256 eventId,
+        uint256 maxSupply,
+        uint256 mintExpiration,
+        address eventOrganizer
+    ) public whenNotPaused onlyAdmin returns (bool) {
+        require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
+        if (mintExpiration > 0) {
+            require(mintExpiration > block.timestamp + 3 days, "Poap: mint expiration must be higher than current timestamp plus 3 days");
+        }
+        if (maxSupply == 0) {
+            _eventMaxSupply[eventId] = type(uint256).max;
+        } else {
+            _eventMaxSupply[eventId] = maxSupply;
+        }
+        _eventMintExpiration[eventId] = mintExpiration;
+        addEventMinter(eventId, eventOrganizer);
+        PoapStateful.setMinter(eventOrganizer);
+        return true;
+    }
+
+    /*
      * @dev Function to mint tokens
      * @param eventId EventId for the new token
      * @param to The address that will receive the minted tokens.
@@ -209,10 +240,8 @@ contract SoulboundPoap is
     function mintToken(
         uint256 eventId,
         address to,
-        string memory initialData
-    ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
-        //lastId += 1;
-        //return _mintToken(eventId, lastId, to);
+        string calldata initialData
+    ) public whenNotPaused onlyEventMinter(eventId) returns (uint256) {
         return _mintToken(eventId, to, initialData);
     }
 
@@ -225,13 +254,11 @@ contract SoulboundPoap is
     function mintEventToManyUsers(
         uint256 eventId,
         address[] memory to,
-        string memory initialData
+        string calldata initialData
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
-            //_mintToken(eventId, lastId + 1 + i, to[i]);
             _mintToken(eventId, to[i], initialData);
         }
-        //lastId += to.length;
         return true;
     }
 
@@ -244,14 +271,20 @@ contract SoulboundPoap is
     function mintUserToManyEvents(
         uint256[] memory eventIds,
         address to,
-        string memory initialData
+        string calldata initialData
     ) public whenNotPaused onlyAdmin returns (bool) {
         for (uint256 i = 0; i < eventIds.length; ++i) {
-            //_mintToken(eventIds[i], lastId + 1 + i, to);
             _mintToken(eventIds[i], to, initialData);
         }
-        //lastId += eventIds.length;
         return true;
+    }
+
+    function eventMaxSupply(uint256 eventId) public view returns (uint256) {
+        return _eventMaxSupply[eventId];
+    }
+
+    function eventTotalSupply(uint256 eventId) public view returns (uint256) {
+        return _eventTotalSupply[eventId];
     }
 
     /*
@@ -260,7 +293,7 @@ contract SoulboundPoap is
      */
     function burn(uint256 tokenId) public override {
         require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
+            _isApprovedOrOwner(_msgSender(), tokenId),
             "SoulboundPoap: not authorized to burn"
         );
         // Unlock soulbound token before burn
@@ -279,6 +312,9 @@ contract SoulboundPoap is
     function __burn(uint256 tokenId) internal {
         super._burn(tokenId);
 
+        uint256 eventId = _tokenEvent[tokenId];
+        _eventTotalSupply[eventId]--;
+        _totalSupply--;
         delete _tokenEvent[tokenId];
     }
 
@@ -292,15 +328,24 @@ contract SoulboundPoap is
     function _mintToken(
         uint256 eventId,
         address to,
-        string memory initialData
-    ) internal returns (bool) {
+        string calldata initialData
+    ) internal returns (uint256) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
+        require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
+        if (_eventMintExpiration[eventId] > 0) {
+            require(_eventMintExpiration[eventId] >= block.timestamp, "Poap: event mint has expired");
+        }
+        require(
+            _eventTotalSupply[eventId] < _eventMaxSupply[eventId],
+            "Poap: max supply reached for event"
+        );
+        uint256 tokenId = PoapStateful.mint(to, initialData);
         _isLocked[tokenId] = true;
         emit Locked(tokenId);
         _tokenEvent[tokenId] = eventId;
+        _eventTotalSupply[eventId]++;
         emit EventToken(eventId, tokenId);
-        return true;
+        return tokenId;
     }
 
     function removeAdmin(address account) public onlyAdmin {
@@ -439,7 +484,7 @@ contract SoulboundPoap is
     )
         public
         pure
-        override(ERC721, ERC721Enumerable, AccessControl, PoapStateful)
+        override(ERC721Enumerable, AccessControl, PoapStateful)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
