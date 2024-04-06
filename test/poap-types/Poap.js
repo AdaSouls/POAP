@@ -825,7 +825,70 @@ describe("Poap contract", function () {
 
         })
 
-        // TODO: eventMaxSupply
+        describe("eventMaxSupply", function () {
+
+            it("Should be callable by any address", async function () {
+    
+                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).eventMaxSupply(1)).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
+                expect(await poapToken.connect(addr2).eventMaxSupply(2)).to.be.equal(100);
+                expect(await poapToken.connect(addr3).eventMaxSupply(3)).to.be.equal(20);
+
+            });
+
+            it("Should retrieve the right max supply for an event", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).eventMaxSupply(1)).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
+                expect(await poapToken.connect(addr1).eventMaxSupply(2)).to.be.equal(100);
+                expect(await poapToken.connect(addr1).eventMaxSupply(3)).to.be.equal(20);
+
+            });
+
+            it("Should retrieve 0 as max supply for non existing events", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).eventMaxSupply(1)).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
+                expect(await poapToken.connect(addr1).eventMaxSupply(2)).to.be.equal(100);
+                expect(await poapToken.connect(addr1).eventMaxSupply(3)).to.be.equal(20);
+                expect(await poapToken.connect(addr1).eventMaxSupply(4)).to.be.equal(0);
+
+            });
+
+        })
         // TODO: eventTotalSupply
         // TODO: burn
         // TODO: removeAdmin
