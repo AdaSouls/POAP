@@ -1076,8 +1076,53 @@ describe("Poap contract", function () {
 
         })
 
-        // TODO: addAdmin
-        
+        describe("addAdmin", function () {
+
+            it("Should only be callable by an admin", async function () {
+    
+                const { poapToken, owner, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.connect(addr1).addAdmin(owner.address)).to.be.reverted;
+
+                await expect(poapToken.addAdmin(addr1.address)).to.be.fulfilled;
+
+            });
+
+            it("Should add the admin role to an address", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                expect(await poapToken.isAdmin(addr1.address)).to.be.false;
+
+                await expect(poapToken.addAdmin(addr1.address)).to.be.fulfilled;
+
+                expect(await poapToken.isAdmin(addr1.address)).to.be.true;
+                
+            });
+
+            it("Should emit AdminAdded event", async function () {               
+
+                const { poapToken, owner } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.addAdmin(owner.address)).to.emit(poapToken, "AdminAdded").withArgs(owner.address);
+
+            });
+
+            it("Should emit RoleGranted event", async function () {               
+
+                const { poapToken, owner, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.addAdmin(addr1.address)).to.emit(poapToken, "RoleGranted").withArgs("0x0000000000000000000000000000000000000000000000000000000000000000", addr1.address, owner.address);
+
+            });
+
+        })
+
         describe("removeAdmin", function () {
 
             it("Should only be callable by an admin", async function () {
@@ -1095,17 +1140,133 @@ describe("Poap contract", function () {
 
             });
 
+            it("Should remove the admin role from an admin", async function () {
+    
+                const { poapToken, owner } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                expect(await poapToken.isAdmin(owner.address)).to.be.true;
+
+                await expect(poapToken.removeAdmin(owner.address)).to.be.fulfilled;
+
+                expect(await poapToken.isAdmin(owner.address)).to.be.false;
+
+            });
+
             it("Should emit AdminRemoved event", async function () {               
+
+                const { poapToken, owner } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.removeAdmin(owner.address)).to.emit(poapToken, "AdminRemoved").withArgs(owner.address);
 
             });
 
             it("Should emit RoleRevoked event", async function () {               
 
+                const { poapToken, owner } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                await expect(poapToken.removeAdmin(owner.address)).to.emit(poapToken, "RoleRevoked").withArgs("0x0000000000000000000000000000000000000000000000000000000000000000", owner.address, owner.address);
+
             });
 
         })
 
-        // TODO: addEventMinter / removeEventMinter
+        describe("addEventMinter", function () {
+
+            it("Should only be callable by an admin or by an event minter", async function () {
+    
+                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.connect(addr2).addEventMinter(1, addr3.address)).to.be.reverted; // nor admin nor event minter
+                await expect(poapToken.addEventMinter(1, addr3.address)).to.be.fulfilled; // admin call
+                await expect(poapToken.connect(addr1).addEventMinter(1, addr2.address)).to.be.fulfilled; // event minter call
+
+
+            });
+
+            it("Should add the account as event minter", async function () {
+    
+                const { poapToken, addr1, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.isEventMinter(1, addr3.address)).to.be.false;
+
+                await expect(poapToken.addEventMinter(1, addr3.address)).to.be.fulfilled;
+
+                expect(await poapToken.isEventMinter(1, addr3.address)).to.be.true;
+                
+            });
+
+            it("Should emit EventMinterAdded event", async function () {               
+
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.addEventMinter(1, addr2.address)).to.emit(poapToken, "EventMinterAdded").withArgs(1, addr2.address);
+
+            });
+
+        })
+
+        describe("removeEventMinter", function () {
+
+            it("Should only be callable by an admin", async function () {
+    
+                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.connect(addr2).removeEventMinter(1, addr3.address)).to.be.reverted; // nor admin nor event minter
+                await expect(poapToken.removeEventMinter(1, addr3.address)).to.be.fulfilled; // admin call
+                await expect(poapToken.connect(addr1).removeEventMinter(1, addr2.address)).to.be.reverted; // event minter call
+
+
+            });
+
+            it("Should add the account as event minter", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.isEventMinter(1, addr1.address)).to.be.true;
+
+                await expect(poapToken.removeEventMinter(1, addr1.address)).to.be.fulfilled;
+
+                expect(await poapToken.isEventMinter(1, addr1.address)).to.be.false;
+                
+            });
+
+            it("Should emit EventMinterRemoved event", async function () {               
+
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.removeEventMinter(1, addr1.address)).to.emit(poapToken, "EventMinterRemoved").withArgs(1, addr1.address);
+
+            });
+
+        })
 
         // TODO: freeze / unfreeze / setFreezeDuration / getFreezeTime / isFrozen
         
