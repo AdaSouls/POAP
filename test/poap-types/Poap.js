@@ -889,11 +889,132 @@ describe("Poap contract", function () {
             });
 
         })
-        // TODO: eventTotalSupply
+
+        describe("eventTotalSupply", function () {
+
+            it("Should be callable by any address", async function () {
+    
+                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).eventTotalSupply(1)).to.be.equal(2);
+                expect(await poapToken.connect(addr2).eventTotalSupply(2)).to.be.equal(3);
+                expect(await poapToken.connect(addr3).eventTotalSupply(3)).to.be.equal(2);
+
+            });
+
+            it("Should retrieve the right total supply for an event", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).eventTotalSupply(1)).to.be.equal(2);
+                expect(await poapToken.connect(addr1).eventTotalSupply(2)).to.be.equal(3);
+                expect(await poapToken.connect(addr1).eventTotalSupply(3)).to.be.equal(2);
+
+            });
+
+            it("Should retrieve 0 as total supply for events that haven't yet minted any token (or don't exist)", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).eventTotalSupply(1)).to.be.equal(2);
+                expect(await poapToken.connect(addr1).eventTotalSupply(2)).to.be.equal(3);
+                expect(await poapToken.connect(addr1).eventTotalSupply(3)).to.be.equal(0);
+                expect(await poapToken.connect(addr1).eventTotalSupply(4)).to.be.equal(0);
+
+            });
+
+        })
+
+        describe("totalSupply", function () {
+
+            it("Should be callable by any address", async function () {
+    
+                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).totalSupply()).to.be.equal(7);
+                expect(await poapToken.connect(addr2).totalSupply()).to.be.equal(7);
+                expect(await poapToken.connect(addr3).totalSupply()).to.be.equal(7);
+
+            });
+
+            it("Should retrieve the total supply for all poaps", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], addr2.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2, 3], addr2.address, "InitialState")).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).totalSupply()).to.be.equal(8);
+
+            });
+
+            it("Should retrieve 0 as total supply if no poaps have been minted", async function () {
+    
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                expect(await poapToken.connect(addr1).totalSupply()).to.be.equal(0);
+
+            });
+
+        })
+        
         // TODO: burn
         // TODO: removeAdmin
         // TODO: freeze / unfreeze / setFreezeDuration / getFreezeTime / isFrozen
-        // TODO: totalSupply
+        
 
     })
 
