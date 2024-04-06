@@ -94,7 +94,7 @@ describe("Soulbound Poap contract", function () {
     
             const { soulboundPoapToken, addr1 } = await loadFixture(deployPoapFixture);
 
-            await expect(soulboundPoapToken.connect(addr1)["initialize(string, address[])"]("https://ipfs.io/ipfs/QmQ8kV9JuhkiSt7Qp7HTsiyVUiaobFeTTyjK71q5k8e46w/", [])).to.be.revertedWithCustomError(soulboundPoapToken, "OwnableUnauthorizedAccount");
+            await expect(soulboundPoapToken.connect(addr1)["initialize(string, address[])"]("https://ipfs.io/ipfs/QmQ8kV9JuhkiSt7Qp7HTsiyVUiaobFeTTyjK71q5k8e46w/", [])).to.be.revertedWithCustomError(soulboundPoapToken, "AccessControlUnauthorizedAccount");
             
             await expect(soulboundPoapToken["initialize(string, address[])"]("https://ipfs.io/ipfs/QmQ8kV9JuhkiSt7Qp7HTsiyVUiaobFeTTyjK71q5k8e46w/", [])).to.be.fulfilled;
 
