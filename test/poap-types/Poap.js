@@ -1075,7 +1075,38 @@ describe("Poap contract", function () {
             });
 
         })
-        // TODO: removeAdmin
+
+        // TODO: addAdmin
+        
+        describe("removeAdmin", function () {
+
+            it("Should only be callable by an admin", async function () {
+    
+                const { poapToken, owner, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(poapToken.connect(addr1).removeAdmin(owner.address)).to.be.reverted;
+
+                await expect(poapToken.removeAdmin(owner.address)).to.be.fulfilled;
+
+            });
+
+            it("Should emit AdminRemoved event", async function () {               
+
+            });
+
+            it("Should emit RoleRevoked event", async function () {               
+
+            });
+
+        })
+
+        // TODO: addEventMinter / removeEventMinter
+
         // TODO: freeze / unfreeze / setFreezeDuration / getFreezeTime / isFrozen
         
 
