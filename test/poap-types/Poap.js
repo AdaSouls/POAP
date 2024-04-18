@@ -1268,7 +1268,6 @@ describe("Poap Contract", function () {
 
         })
 
-        // TODO: getFreezeTime
         describe("freeze", function () {
 
             it("Should only be callable by approved or owner or by an admin", async function () {
@@ -1361,7 +1360,7 @@ describe("Poap Contract", function () {
 
             it("Should only be callable by an admin", async function () {
     
-                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
@@ -1439,6 +1438,46 @@ describe("Poap Contract", function () {
                 await expect(poapToken.freeze(1)).to.be.fulfilled;
                 expect(await poapToken.isFrozen(1)).to.be.true;
                 await expect(poapToken.unfreeze(1)).to.emit(poapToken, "Unfrozen").withArgs(1);;
+
+            });
+
+        })
+
+        describe("getFreezeTime", function () {
+
+            it("Should retrieve the frozen time of a frozen token", async function () {
+     
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.setFreezeDuration(120)).to.be.fulfilled;
+                await expect(poapToken.freeze(1)).to.be.fulfilled;
+                expect(await poapToken.isFrozen(1)).to.be.true;
+
+                const timestamp = await time.latest();
+                const freezeDuration = await poapToken.freezeDuration();
+                const tokenFreezeTime = await poapToken.getFreezeTime(1);
+
+                expect(BigInt(tokenFreezeTime) === BigInt(timestamp) + BigInt(freezeDuration)).to.be.true;
+
+            });
+
+            it("Should retrieve 0 as the frozen time of an unfrozen token", async function () {
+     
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+                await expect(poapToken.setFreezeDuration(120)).to.be.fulfilled;
+                expect(await poapToken.isFrozen(1)).to.be.false;
+
+                const tokenFreezeTime = await poapToken.getFreezeTime(1);
+                expect(tokenFreezeTime === BigInt(0)).to.be.true;
 
             });
 
