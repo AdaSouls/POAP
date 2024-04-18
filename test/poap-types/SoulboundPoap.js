@@ -368,6 +368,20 @@ describe("Soulbound Poap Contract", function () {
 
             });
 
+            it("Should lock the token on receiver's wallet", async function () {
+    
+                const { soulboundPoapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(soulboundPoapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await soulboundPoapToken.mintToken(1, addr2.address, "InitialState");
+
+                expect(await soulboundPoapToken.locked(1)).to.be.true;
+
+            });
+
             it("Should assign the right event id to the token", async function () {
     
                 const { soulboundPoapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
@@ -423,6 +437,17 @@ describe("Soulbound Poap Contract", function () {
 
             });
 
+            it("Should emit Locked event", async function () {
+    
+                const { soulboundPoapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(soulboundPoapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(soulboundPoapToken.mintToken(1, addr2.address, "InitialState")).to.emit(soulboundPoapToken, "Locked").withArgs(1);
+
+            });
 
         })
 
@@ -825,6 +850,40 @@ describe("Soulbound Poap Contract", function () {
 
         })
 
+        describe("transferFrom", function () {
+
+            it("Should not allow the transfer of a token", async function () {
+    
+                const { soulboundPoapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+                
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+                
+                await expect(soulboundPoapToken.createEventId(1, 0, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+                await expect(soulboundPoapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(soulboundPoapToken.connect(addr1).transferFrom(addr1.address, addr3.address, 1)).to.be.revertedWith("SoulboundPoap: soulbound is locked to transfer");
+
+            });
+
+        })
+
+        describe("safeTransferFrom", function () {
+
+            it("Should not allow the transfer of a token", async function () {
+    
+                const { soulboundPoapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
+                
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+                
+                await expect(soulboundPoapToken.createEventId(1, 0, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+                await expect(soulboundPoapToken.mintToken(1, addr1.address, "InitialState")).to.be.fulfilled;
+
+                await expect(soulboundPoapToken.connect(addr1).safeTransferFrom(addr1.address, addr3.address, 1)).to.be.revertedWith("SoulboundPoap: soulbound is locked to transfer");
+
+            });
+
+        })
+
         describe("eventMaxSupply", function () {
 
             it("Should be callable by any address", async function () {
@@ -1071,6 +1130,19 @@ describe("Soulbound Poap Contract", function () {
                 await expect(soulboundPoapToken.connect(addr1).burn(2)).to.be.fulfilled;
 
                 expect(await soulboundPoapToken.totalSupply()).to.be.equal(3);
+
+            });
+
+            it("Should emit Unlocked event", async function () {
+    
+                const { soulboundPoapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(soulboundPoapToken.createEventId(1, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(soulboundPoapToken.mintToken(1, addr2.address, "InitialState")).to.be.fulfilled;
+
+                await expect(soulboundPoapToken.connect(addr2).burn(1)).to.emit(soulboundPoapToken, "Unlocked").withArgs(1);
 
             });
 

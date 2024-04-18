@@ -33,8 +33,6 @@ contract SoulboundPoap is
 {
     // Events
     event EventToken(uint256 indexed eventId, uint256 tokenId);
-    //event Frozen(uint256 id);
-    //event Unfrozen(uint256 id);
 
     // Base token URI
     string private ___baseURI;
@@ -52,12 +50,6 @@ contract SoulboundPoap is
     mapping(uint256 => uint256) private _tokenEvent;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
-
-    // Frozen time for each token in seconds
-    //mapping(uint256 => uint256) private _tokenFrozen;
-
-    // Frozen time for a token
-    //uint256 public freezeDuration;
 
     // Locked tokens
     mapping(uint256 => bool) private _isLocked;
@@ -127,14 +119,6 @@ contract SoulboundPoap is
     ) public override onlyAdmin whenNotPaused {
         ___baseURI = baseURI;
     }
-
-/*     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(
-            lastId < newLastId,
-            "SoulboundPoap: lastId must be greater than newLastId"
-        );
-        lastId = newLastId;
-    } */
 
     function approve(
         address to,
@@ -351,109 +335,6 @@ contract SoulboundPoap is
     function removeAdmin(address account) public onlyAdmin {
         _removeAdmin(account);
     }
-
-    /*
-     * @dev Gets the freeze time for the token
-     * @param tokenId ( uint256 ) The token id to freeze.
-     * @return uint256 representing the token freeze time
-     */
-/*     function getFreezeTime(uint256 tokenId) public view returns (uint256) {
-        return _tokenFrozen[tokenId];
-    } */
-
-    /*
-     * @dev Gets the token freeze status
-     * @param tokenId ( uint256 ) The token id to freeze.
-     * @return bool representing the token freeze status
-     */
-/*     function isFrozen(uint256 tokenId) external view returns (bool) {
-        return _tokenFrozen[tokenId] >= block.timestamp;
-    } */
-
-    /*
-     * @dev Modifier to make a function callable only when the toke is not frozen.
-     * @param tokenId ( uint256 ) The token id to check.
-     */
-/*     modifier whenNotFrozen(uint256 tokenId) {
-        require(
-            !this.isFrozen(tokenId),
-            "SoulboundPoap: soulbound token is frozen"
-        );
-        _;
-    } */
-
-    /*
-     * @dev Modifier to make a function callable only when the token is frozen.
-     * @param tokenId ( uint256 ) The token id to check.
-     */
-/*     modifier whenFrozen(uint256 tokenId) {
-        require(
-            this.isFrozen(tokenId),
-            "SoulboundPoap: soulbound token is frozen"
-        );
-        _;
-    } */
-
-    /*
-     * @dev Called by the owner to set the time a token can be frozen.
-     * Requires
-     * - The msg sender to be the admin
-     * - The contract does not have to be paused
-     * @param time ( uint256 ) Time that the token will be frozen.
-     */
-/*     function setFreezeDuration(uint256 time) public onlyAdmin whenNotPaused {
-        freezeDuration = time * 1 seconds;
-    } */
-
-    /*
-     * @dev Freeze a specific ERC721 token.
-     * Requires
-     * - The msg sender to be the admin, owner, approved, or operator
-     * - The contract does not have to be paused
-     * - The token does not have to be frozen
-     * @param tokenId ( uint256 ) Id of the ERC721 token to be frozen.
-     */
-/*     function freeze(
-        uint256 tokenId
-    ) public whenNotPaused whenNotFrozen(tokenId) {
-        require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "SoulboundPoap: not authorized to freeze"
-        );
-        _freeze(tokenId);
-    } */
-
-    /*
-     * @dev Unfreeze a specific ERC721 token.
-     * Requires
-     * - The msg sender to be the admin
-     * - The contract does not have to be paused
-     * - The token must be frozen
-     * @param tokenId ( uint256 ) Id of the ERC721 token to be unfrozen.
-     */
-/*     function unfreeze(
-        uint256 tokenId
-    ) public onlyAdmin whenNotPaused whenFrozen(tokenId) {
-        _unfreeze(tokenId);
-    } */
-
-    /*
-     * @dev Internal function to freeze a specific token
-     * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
-     */
-/*     function _freeze(uint256 tokenId) internal {
-        _tokenFrozen[tokenId] = block.timestamp + freezeDuration;
-        emit Frozen(tokenId);
-    } */
-
-    /*
-     * @dev Internal function to freeze a specific token
-     * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
-     */
-/*     function _unfreeze(uint256 tokenId) internal {
-        delete _tokenFrozen[tokenId];
-        emit Unfrozen(tokenId);
-    } */
 
     function locked(uint256 tokenId) public view returns (bool) {
         require(
