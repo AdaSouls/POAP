@@ -33,8 +33,8 @@ contract SoulboundPoap is
 {
     // Events
     event EventToken(uint256 indexed eventId, uint256 tokenId);
-    event Frozen(uint256 id);
-    event Unfrozen(uint256 id);
+    //event Frozen(uint256 id);
+    //event Unfrozen(uint256 id);
 
     // Base token URI
     string private ___baseURI;
@@ -54,10 +54,10 @@ contract SoulboundPoap is
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
     // Frozen time for each token in seconds
-    mapping(uint256 => uint256) private _tokenFrozen;
+    //mapping(uint256 => uint256) private _tokenFrozen;
 
     // Frozen time for a token
-    uint256 public freezeDuration;
+    //uint256 public freezeDuration;
 
     // Locked tokens
     mapping(uint256 => bool) private _isLocked;
@@ -154,7 +154,7 @@ contract SoulboundPoap is
         address from,
         address to,
         uint256 tokenId
-    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+    ) public override(ERC721, IERC721) whenNotPaused {
         require(
             !locked(tokenId),
             "SoulboundPoap: soulbound is locked to transfer"
@@ -179,7 +179,7 @@ contract SoulboundPoap is
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+    ) public override(ERC721, IERC721) whenNotPaused {
         require(
             !locked(tokenId),
             "SoulboundPoap: soulbound is locked to transfer"
@@ -216,9 +216,9 @@ contract SoulboundPoap is
         uint256 mintExpiration,
         address eventOrganizer
     ) public whenNotPaused onlyAdmin returns (bool) {
-        require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
+        require(_eventMaxSupply[eventId] == 0, "SoulboundPoap: event already created");
         if (mintExpiration > 0) {
-            require(mintExpiration > block.timestamp + 3 days, "Poap: mint expiration must be higher than current timestamp plus 3 days");
+            require(mintExpiration > block.timestamp + 3 days, "SoulboundPoap: mint expiration must be higher than current timestamp plus 3 days");
         }
         if (maxSupply == 0) {
             _eventMaxSupply[eventId] = type(uint256).max;
@@ -331,13 +331,13 @@ contract SoulboundPoap is
         string calldata initialData
     ) internal returns (uint256) {
         // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
+        require(_eventMaxSupply[eventId] != 0, "SoulboundPoap: event does not exist");
         if (_eventMintExpiration[eventId] > 0) {
-            require(_eventMintExpiration[eventId] >= block.timestamp, "Poap: event mint has expired");
+            require(_eventMintExpiration[eventId] >= block.timestamp, "SoulboundPoap: event mint has expired");
         }
         require(
             _eventTotalSupply[eventId] < _eventMaxSupply[eventId],
-            "Poap: max supply reached for event"
+            "SoulboundPoap: max supply reached for event"
         );
         uint256 tokenId = PoapStateful.mint(to, initialData);
         _isLocked[tokenId] = true;
@@ -357,42 +357,42 @@ contract SoulboundPoap is
      * @param tokenId ( uint256 ) The token id to freeze.
      * @return uint256 representing the token freeze time
      */
-    function getFreezeTime(uint256 tokenId) public view returns (uint256) {
+/*     function getFreezeTime(uint256 tokenId) public view returns (uint256) {
         return _tokenFrozen[tokenId];
-    }
+    } */
 
     /*
      * @dev Gets the token freeze status
      * @param tokenId ( uint256 ) The token id to freeze.
      * @return bool representing the token freeze status
      */
-    function isFrozen(uint256 tokenId) external view returns (bool) {
+/*     function isFrozen(uint256 tokenId) external view returns (bool) {
         return _tokenFrozen[tokenId] >= block.timestamp;
-    }
+    } */
 
     /*
      * @dev Modifier to make a function callable only when the toke is not frozen.
      * @param tokenId ( uint256 ) The token id to check.
      */
-    modifier whenNotFrozen(uint256 tokenId) {
+/*     modifier whenNotFrozen(uint256 tokenId) {
         require(
             !this.isFrozen(tokenId),
             "SoulboundPoap: soulbound token is frozen"
         );
         _;
-    }
+    } */
 
     /*
      * @dev Modifier to make a function callable only when the token is frozen.
      * @param tokenId ( uint256 ) The token id to check.
      */
-    modifier whenFrozen(uint256 tokenId) {
+/*     modifier whenFrozen(uint256 tokenId) {
         require(
             this.isFrozen(tokenId),
             "SoulboundPoap: soulbound token is frozen"
         );
         _;
-    }
+    } */
 
     /*
      * @dev Called by the owner to set the time a token can be frozen.
@@ -401,9 +401,9 @@ contract SoulboundPoap is
      * - The contract does not have to be paused
      * @param time ( uint256 ) Time that the token will be frozen.
      */
-    function setFreezeDuration(uint256 time) public onlyAdmin whenNotPaused {
+/*     function setFreezeDuration(uint256 time) public onlyAdmin whenNotPaused {
         freezeDuration = time * 1 seconds;
-    }
+    } */
 
     /*
      * @dev Freeze a specific ERC721 token.
@@ -413,15 +413,15 @@ contract SoulboundPoap is
      * - The token does not have to be frozen
      * @param tokenId ( uint256 ) Id of the ERC721 token to be frozen.
      */
-    function freeze(
+/*     function freeze(
         uint256 tokenId
     ) public whenNotPaused whenNotFrozen(tokenId) {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "SoulboundPoap: not authorize to freeze"
+            "SoulboundPoap: not authorized to freeze"
         );
         _freeze(tokenId);
-    }
+    } */
 
     /*
      * @dev Unfreeze a specific ERC721 token.
@@ -431,29 +431,29 @@ contract SoulboundPoap is
      * - The token must be frozen
      * @param tokenId ( uint256 ) Id of the ERC721 token to be unfrozen.
      */
-    function unfreeze(
+/*     function unfreeze(
         uint256 tokenId
     ) public onlyAdmin whenNotPaused whenFrozen(tokenId) {
         _unfreeze(tokenId);
-    }
+    } */
 
     /*
      * @dev Internal function to freeze a specific token
      * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
      */
-    function _freeze(uint256 tokenId) internal {
+/*     function _freeze(uint256 tokenId) internal {
         _tokenFrozen[tokenId] = block.timestamp + freezeDuration;
         emit Frozen(tokenId);
-    }
+    } */
 
     /*
      * @dev Internal function to freeze a specific token
      * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
      */
-    function _unfreeze(uint256 tokenId) internal {
+/*     function _unfreeze(uint256 tokenId) internal {
         delete _tokenFrozen[tokenId];
         emit Unfrozen(tokenId);
-    }
+    } */
 
     function locked(uint256 tokenId) public view returns (bool) {
         require(

@@ -33,24 +33,24 @@ describe("Poap Contract", function () {
 
             const { poapToken } = await loadFixture(deployPoapFixture);
     
-            const soulboundPoapName = await poapToken.name();
-            expect(soulboundPoapName).to.equal("Test Poap");
+            const poapName = await poapToken.name();
+            expect(poapName).to.equal("Test Poap");
         });
     
         it("Should assign the symbol correctly", async function () {
     
             const { poapToken } = await loadFixture(deployPoapFixture);
     
-            const soulboundPoapSymbol = await poapToken.symbol();
-            expect(soulboundPoapSymbol).to.equal("TPOAP");
+            const poapSymbol = await poapToken.symbol();
+            expect(poapSymbol).to.equal("TPOAP");
         });
 
         it("Should assign the right owner", async function () {
     
             const { poapToken, owner } = await loadFixture(deployPoapFixture);
     
-            const soulboundPoapOwner = await poapToken.owner();
-            expect(soulboundPoapOwner).to.equal(owner.address);
+            const poapOwner = await poapToken.owner();
+            expect(poapOwner).to.equal(owner.address);
         });
     })
 
@@ -67,8 +67,8 @@ describe("Poap Contract", function () {
 
             const { poapToken, owner } = await loadFixture(deployPoapFixtureAndInitialize);
             
-            const soulboundPoapIsAdmin = await poapToken.isAdmin(owner.address);
-            expect(soulboundPoapIsAdmin).to.equal(true);
+            const poapIsAdmin = await poapToken.isAdmin(owner.address);
+            expect(poapIsAdmin).to.equal(true);
         });
 
         it("Should set extra admins if specified", async function () {
@@ -77,21 +77,21 @@ describe("Poap Contract", function () {
             
             await poapToken["initialize(string, address[])"]("https://ipfs.io/ipfs/QmQ8kV9JuhkiSt7Qp7HTsiyVUiaobFeTTyjK71q5k8e46w/", [addr1.address, addr2.address]);
 
-            const soulboundPoapIsAdmin1 = await poapToken.isAdmin(owner.address);
-            const soulboundPoapIsAdmin2 = await poapToken.isAdmin(owner.address);
-            const soulboundPoapIsAdmin3 = await poapToken.isAdmin(owner.address);
+            const poapIsAdmin1 = await poapToken.isAdmin(owner.address);
+            const poapIsAdmin2 = await poapToken.isAdmin(owner.address);
+            const poapIsAdmin3 = await poapToken.isAdmin(owner.address);
 
-            expect(soulboundPoapIsAdmin1).to.equal(true);
-            expect(soulboundPoapIsAdmin2).to.equal(true);
-            expect(soulboundPoapIsAdmin3).to.equal(true);
+            expect(poapIsAdmin1).to.equal(true);
+            expect(poapIsAdmin2).to.equal(true);
+            expect(poapIsAdmin3).to.equal(true);
         });
 
         it("Should set pause status to false", async function () {
 
             const { poapToken } = await loadFixture(deployPoapFixtureAndInitialize);
             
-            const soulboundPoapPaused = await poapToken.paused();
-            expect(soulboundPoapPaused).to.equal(false);
+            const poapPaused = await poapToken.paused();
+            expect(poapPaused).to.equal(false);
         });
 
         it("Should only be callable by the owner", async function () {
@@ -108,9 +108,9 @@ describe("Poap Contract", function () {
     
             const { poapToken } = await loadFixture(deployPoapFixtureAndInitialize);
 
-            const soulboundPoapInterface = await poapToken.supportsInterface("0x01ffc9a7");
+            const poapInterface = await poapToken.supportsInterface("0x01ffc9a7");
             
-            expect(soulboundPoapInterface).to.be.true;
+            expect(poapInterface).to.be.true;
 
         });
 
@@ -118,9 +118,9 @@ describe("Poap Contract", function () {
     
             const { poapToken } = await loadFixture(deployPoapFixtureAndInitialize);
 
-            const soulboundPoapInterface = await poapToken.supportsInterface("0xd0def521");
+            const poapInterface = await poapToken.supportsInterface("0xd0def521");
             
-            expect(soulboundPoapInterface).to.be.true;
+            expect(poapInterface).to.be.true;
 
         });
 
