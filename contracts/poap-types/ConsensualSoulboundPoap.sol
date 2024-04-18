@@ -129,14 +129,6 @@ contract ConsensualSoulboundPoap is
         ___baseURI = baseURI;
     }
 
-/*     function setLastId(uint256 newLastId) public onlyAdmin whenNotPaused {
-        require(
-            lastId < newLastId,
-            "ConsensualSoulboundPoap: lastId must be greater than newLastId"
-        );
-        lastId = newLastId;
-    } */
-
     function approve(
         address to,
         uint256 tokenId
@@ -217,9 +209,9 @@ contract ConsensualSoulboundPoap is
         uint256 mintExpiration,
         address eventOrganizer
     ) public whenNotPaused onlyAdmin returns (bool) {
-        require(_eventMaxSupply[eventId] == 0, "SoulboundPoap: event already created");
+        require(_eventMaxSupply[eventId] == 0, "ConsensualSoulboundPoap: event already created");
         if (mintExpiration > 0) {
-            require(mintExpiration > block.timestamp + 3 days, "SoulboundPoap: mint expiration must be higher than current timestamp plus 3 days");
+            require(mintExpiration > block.timestamp + 3 days, "ConsensualSoulboundPoap: mint expiration must be higher than current timestamp plus 3 days");
         }
         if (maxSupply == 0) {
             _eventMaxSupply[eventId] = type(uint256).max;
@@ -235,19 +227,26 @@ contract ConsensualSoulboundPoap is
     function issue(
         uint256 eventId,
         address to,
-        string memory initialData,
+        string calldata initialData,
         bool isLocked,
         BurnAuth burnAuthority
-    ) public whenNotPaused onlyEventMinter(eventId) {
-        // check that the token id is not already used
-        //require(ownerOf(tokenId) == address(0));
-
-        //_safeMint(to, tokenId);
-        //mintToken(eventId, to, intialData);
-        uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
+    ) public whenNotPaused onlyEventMinter(eventId) returns (uint256) {
+        require(_eventMaxSupply[eventId] != 0, "ConsensualSoulboundPoap: event does not exist");
+        if (_eventMintExpiration[eventId] > 0) {
+            require(_eventMintExpiration[eventId] >= block.timestamp, "ConsensualSoulboundPoap: event mint has expired");
+        }
+        require(
+            _eventTotalSupply[eventId] < _eventMaxSupply[eventId],
+            "ConsensualSoulboundPoap: max supply reached for event"
+        );
+        uint256 tokenId = PoapStateful.mint(to, initialData);
 
         // remember if the token is locked
         _isLocked[tokenId] = isLocked;
+
+        if (isLocked) {
+            emit Locked(tokenId);
+        }
 
         // remember the `burnAuth` for this token
         _burnAuth[tokenId] = burnAuthority;
@@ -256,6 +255,10 @@ contract ConsensualSoulboundPoap is
         _tokenIssuers[tokenId] = _msgSender();
 
         emit Issued(_msgSender(), to, tokenId, burnAuthority);
+        _tokenEvent[tokenId] = eventId;
+        _eventTotalSupply[eventId]++;
+        emit EventToken(eventId, tokenId);
+        return tokenId;
     }
 
     /*
@@ -347,7 +350,6 @@ contract ConsensualSoulboundPoap is
         _totalSupply--;
         delete _tokenEvent[tokenId];
     }
-
 
     function removeAdmin(address account) public onlyAdmin {
         _removeAdmin(account);
