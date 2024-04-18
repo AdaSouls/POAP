@@ -27,7 +27,6 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 contract ConsensualSoulboundPoap is
     Initializable,
-    ERC721,
     ERC721Enumerable,
     PoapRoles,
     PoapPausable,
@@ -37,25 +36,23 @@ contract ConsensualSoulboundPoap is
 {
     // Events
     event EventToken(uint256 indexed eventId, uint256 tokenId);
-    event Frozen(uint256 id);
-    event Unfrozen(uint256 id);
 
     // Base token URI
     string private ___baseURI;
 
-    // Last Used id (used to generate new ids)
-    //uint256 private lastId;
+    // Total supply for each EventId
+    mapping(uint256 => uint256) private _eventTotalSupply;
+
+    // Max supply for each EventId
+    mapping(uint256 => uint256) private _eventMaxSupply;
+
+    // Mint expiration timestamp for each EventId
+    mapping(uint256 => uint256) private _eventMintExpiration;
 
     // EventId for each token
     mapping(uint256 => uint256) private _tokenEvent;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
-
-    // Frozen time for each token in seconds
-    mapping(uint256 => uint256) private _tokenFrozen;
-
-    // Frozen time for a token
-    uint256 public freezeDuration;
 
     // Locked tokens
     mapping(uint256 => bool) private _isLocked;
@@ -69,7 +66,6 @@ contract ConsensualSoulboundPoap is
     constructor(
         string memory name_,
         string memory symbol_,
-        //uint256 supply_,
         address owner_
     ) PoapStateful(name_, symbol_, owner_) {
         _grantRole(DEFAULT_ADMIN_ROLE, owner_);
@@ -78,7 +74,7 @@ contract ConsensualSoulboundPoap is
     function initialize(
         string memory __baseURI,
         address[] memory admins
-    ) public initializer onlyOwner {
+    ) public initializer {
         PoapRoles.initialize(_msgSender());
         PoapPausable.initialize();
 
@@ -88,19 +84,19 @@ contract ConsensualSoulboundPoap is
         }
 
         setBaseURI(__baseURI);
-
     }
 
+    /// @dev Gets the event ID for a given token ID.
+    /// @param tokenId Token ID.
     function tokenEvent(uint256 tokenId) public view returns (uint256) {
         return _tokenEvent[tokenId];
     }
 
-    /*
-     ** @dev Gets the token ID at a given index of the tokens list of the requested owner
-     ** @param owner address owning the tokens list to be accessed
-     ** @param index uint256 representing the index to be accessed of the requested tokens list
-     ** @return uint256 token ID at the given index of the tokens list owned by the requested address
-     */
+    /// @dev Gets the token ID at a given index of the tokens list of the requested owner
+    /// @param owner address owning the tokens list to be accessed
+    /// @param index uint256 representing the index to be accessed of the requested tokens list
+    /// @return tokenId token ID at the given index of the tokens list owned by the requested address
+    /// @return eventId token ID at the given index of the tokens list owned by the requested address
     function tokenDetailsOfOwnerByIndex(
         address owner,
         uint256 index
@@ -177,29 +173,6 @@ contract ConsensualSoulboundPoap is
      * @param from ( address ) The address of the current owner of the token
      * @param to ( address ) The address to receive the ownership of the given token ID
      * @param tokenId ( uint256 ) ID of the token to be transferred
-     */
-    /*     function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
-        require(
-            !locked(tokenId),
-            "ConsensualSoulboundPoap: soulbound is locked to transfer"
-        );
-        super.safeTransferFrom(from, to, tokenId);
-    } */
-
-    /*
-     * @dev Safely transfers the ownership of a given token ID to another address (Implements ERC71)
-     * Wrapper for function extended from ERC721 (  https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol )
-     * Requires
-     * - The msg sender to be the owner, approved, or operator
-     * - The contract does not have to be paused
-     * - The token to be transferred must not be frozen.
-     * @param from ( address ) The address of the current owner of the token
-     * @param to ( address ) The address to receive the ownership of the given token ID
-     * @param tokenId ( uint256 ) ID of the token to be transferred
      * @param _data ( bytes ) Data to send along with a safe transfer check
      */
     function safeTransferFrom(
@@ -207,7 +180,7 @@ contract ConsensualSoulboundPoap is
         address to,
         uint256 tokenId,
         bytes memory _data
-    ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
+    ) public override(ERC721, IERC721) whenNotPaused {
         require(
             !locked(tokenId),
             "ConsensualSoulboundPoap: soulbound is locked to transfer"
@@ -230,6 +203,33 @@ contract ConsensualSoulboundPoap is
         return (spender == owner ||
             getApproved(tokenId) == spender ||
             isApprovedForAll(owner, spender));
+    }
+
+    /*
+     * @dev Function to create events with a max supply
+     * @param eventId EventId for the new token
+     * @param to The address that will receive the minted tokens.
+     * @return A boolean that indicates if the operation was successful.
+     */
+    function createEventId(
+        uint256 eventId,
+        uint256 maxSupply,
+        uint256 mintExpiration,
+        address eventOrganizer
+    ) public whenNotPaused onlyAdmin returns (bool) {
+        require(_eventMaxSupply[eventId] == 0, "SoulboundPoap: event already created");
+        if (mintExpiration > 0) {
+            require(mintExpiration > block.timestamp + 3 days, "SoulboundPoap: mint expiration must be higher than current timestamp plus 3 days");
+        }
+        if (maxSupply == 0) {
+            _eventMaxSupply[eventId] = type(uint256).max;
+        } else {
+            _eventMaxSupply[eventId] = maxSupply;
+        }
+        _eventMintExpiration[eventId] = mintExpiration;
+        addEventMinter(eventId, eventOrganizer);
+        PoapStateful.setMinter(eventOrganizer);
+        return true;
     }
 
     function issue(
@@ -264,35 +264,16 @@ contract ConsensualSoulboundPoap is
      * @param to The address that will receive the minted tokens.
      * @return A boolean that indicates if the operation was successful.
      */
-/*     function mintToken(
-        uint256 eventId,
-        address to,
-        string memory initialData
-    ) internal whenNotPaused onlyEventMinter(eventId) returns (bool) {
-        //lastId += 1;
-        //return _mintToken(eventId, lastId, to);
-        return _mintToken(eventId, to, initialData);
-    } */
-
-    /*
-     * @dev Function to mint tokens
-     * @param eventId EventId for the new token
-     * @param to The address that will receive the minted tokens.
-     * @return A boolean that indicates if the operation was successful.
-     */
     function issueEventToManyUsers(
         uint256 eventId,
         address[] memory to,
-        string memory initialData,
+        string calldata initialData,
         bool isLocked,
         BurnAuth burnAuthority
     ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
-            //_mintToken(eventId, lastId + 1 + i, to[i]);
-            //_mintToken(eventId, to[i], initialData);
             issue(eventId, to[i], initialData, isLocked, burnAuthority);
         }
-        //lastId += to.length;
         return true;
     }
 
@@ -305,17 +286,22 @@ contract ConsensualSoulboundPoap is
     function issueUserToManyEvents(
         uint256[] memory eventIds,
         address to,
-        string memory initialData,
+        string calldata initialData,
         bool isLocked,
         BurnAuth burnAuthority
     ) public whenNotPaused onlyAdmin returns (bool) {
         for (uint256 i = 0; i < eventIds.length; ++i) {
-            //_mintToken(eventIds[i], lastId + 1 + i, to);
-            //_mintToken(eventIds[i], to, initialData);
             issue(eventIds[i], to, initialData, isLocked, burnAuthority);
         }
-        //lastId += eventIds.length;
         return true;
+    }
+
+    function eventMaxSupply(uint256 eventId) public view returns (uint256) {
+        return _eventMaxSupply[eventId];
+    }
+
+    function eventTotalSupply(uint256 eventId) public view returns (uint256) {
+        return _eventTotalSupply[eventId];
     }
 
     /*
@@ -323,11 +309,6 @@ contract ConsensualSoulboundPoap is
      * @param tokenId uint256 id of the ERC721 token to be burned.
      */
     function burn(uint256 tokenId) public override {
-        require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "ConsensualSoulboundPoap: not authorized to burn"
-        );
-
         address issuer = _tokenIssuers[tokenId];
         address owner = ownerOf(tokenId);
         BurnAuth burnAuthority = _burnAuth[tokenId];
@@ -361,135 +342,15 @@ contract ConsensualSoulboundPoap is
         delete _burnAuth[tokenId];
         super._burn(tokenId);
 
+        uint256 eventId = _tokenEvent[tokenId];
+        _eventTotalSupply[eventId]--;
+        _totalSupply--;
         delete _tokenEvent[tokenId];
     }
 
-    /*
-     * @dev Function to mint tokens
-     * @param eventId EventId for the new token
-     * @param tokenId The token id to mint.
-     * @param to The address that will receive the minted tokens.
-     * @return A boolean that indicates if the operation was successful.
-     */
-/*     function _mintToken(
-        uint256 eventId,
-        address to,
-        string memory initialData
-    ) internal returns (bool) {
-        // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
-        uint256 tokenId = PoapStateful(address(this)).mint(to, initialData);
-        _isLocked[tokenId] = true;
-        emit Locked(tokenId);
-        _tokenEvent[tokenId] = eventId;
-        emit EventToken(eventId, tokenId);
-        return true;
-    } */
 
     function removeAdmin(address account) public onlyAdmin {
         _removeAdmin(account);
-    }
-
-    /*
-     * @dev Gets the freeze time for the token
-     * @param tokenId ( uint256 ) The token id to freeze.
-     * @return uint256 representing the token freeze time
-     */
-    function getFreezeTime(uint256 tokenId) public view returns (uint256) {
-        return _tokenFrozen[tokenId];
-    }
-
-    /*
-     * @dev Gets the token freeze status
-     * @param tokenId ( uint256 ) The token id to freeze.
-     * @return bool representing the token freeze status
-     */
-    function isFrozen(uint256 tokenId) external view returns (bool) {
-        return _tokenFrozen[tokenId] >= block.timestamp;
-    }
-
-    /*
-     * @dev Modifier to make a function callable only when the toke is not frozen.
-     * @param tokenId ( uint256 ) The token id to check.
-     */
-    modifier whenNotFrozen(uint256 tokenId) {
-        require(
-            !this.isFrozen(tokenId),
-            "ConsensualSoulboundPoap: soulbound token is frozen"
-        );
-        _;
-    }
-
-    /*
-     * @dev Modifier to make a function callable only when the token is frozen.
-     * @param tokenId ( uint256 ) The token id to check.
-     */
-    modifier whenFrozen(uint256 tokenId) {
-        require(
-            this.isFrozen(tokenId),
-            "ConsensualSoulboundPoap: soulbound token is frozen"
-        );
-        _;
-    }
-
-    /*
-     * @dev Called by the owner to set the time a token can be frozen.
-     * Requires
-     * - The msg sender to be the admin
-     * - The contract does not have to be paused
-     * @param time ( uint256 ) Time that the token will be frozen.
-     */
-    function setFreezeDuration(uint256 time) public onlyAdmin whenNotPaused {
-        freezeDuration = time * 1 seconds;
-    }
-
-    /*
-     * @dev Freeze a specific ERC721 token.
-     * Requires
-     * - The msg sender to be the admin, owner, approved, or operator
-     * - The contract does not have to be paused
-     * - The token does not have to be frozen
-     * @param tokenId ( uint256 ) Id of the ERC721 token to be frozen.
-     */
-    function freeze(
-        uint256 tokenId
-    ) public whenNotPaused whenNotFrozen(tokenId) {
-        require(
-            _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "ConsensualSoulboundPoap: not authorize to freeze"
-        );
-        _freeze(tokenId);
-    }
-
-    /*
-     * @dev Unfreeze a specific ERC721 token.
-     * Requires
-     * - The msg sender to be the admin
-     * - The contract does not have to be paused
-     * - The token must be frozen
-     * @param tokenId ( uint256 ) Id of the ERC721 token to be unfrozen.
-     */
-    function unfreeze(
-        uint256 tokenId
-    ) public onlyAdmin whenNotPaused whenFrozen(tokenId) {
-        _unfreeze(tokenId);
-    }
-
-    /*
-     * @dev Internal function to freeze a specific token
-     * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
-     */
-    function _freeze(uint256 tokenId) internal {
-        _tokenFrozen[tokenId] = block.timestamp + freezeDuration;
-        emit Frozen(tokenId);
-    }
-
-    /*
-     * @dev Internal function to freeze a specific token
-     * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
-     */
-    function _unfreeze(uint256 tokenId) internal {
-        delete _tokenFrozen[tokenId];
-        emit Unfrozen(tokenId);
     }
 
     function locked(uint256 tokenId) public view returns (bool) {
@@ -525,7 +386,7 @@ contract ConsensualSoulboundPoap is
     )
         public
         pure
-        override(ERC721, ERC721Enumerable, AccessControl, PoapStateful)
+        override(ERC721Enumerable, AccessControl, PoapStateful)
         returns (bool)
     {
         return super.supportsInterface(interfaceId);
