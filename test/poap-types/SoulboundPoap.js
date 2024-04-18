@@ -1340,8 +1340,6 @@ describe("Soulbound Poap Contract", function () {
 
         })
 
-        // TODO: add tests for locked() function and locking capabilities (Soulbound Interface)
-
     })
 
 
