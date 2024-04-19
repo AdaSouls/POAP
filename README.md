@@ -37,6 +37,6 @@ npx hardhat test
 1. Install dependencies:
 
     ```
-    nvm use 18.16.1
+    nvm use 20.9.0
     npm install
     ```
