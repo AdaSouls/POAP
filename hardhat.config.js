@@ -30,7 +30,7 @@ module.exports = {
     devnet: {
       url: "https://rpc-devnet-cardano-evm.c1.milkomeda.com",
       chainId: 200101,
-      gasPrice: 30000000000,
+      gasPrice: 70000000000,
       accounts: { mnemonic: `${MNEMONIC_DEVNET}` },
     },
     mainnet: {
@@ -58,6 +58,10 @@ module.exports = {
           browserURL: "https://explorer-mainnet-cardano-evm.c1.milkomeda.com"
         }
       }
-    ]
+    ],
+    apiKey: {
+      "milkomeda-c1-devnet": "NO_API_KEY_PROVIDED",
+      "milkomeda-c1-mainnet": "NO_API_KEY_PROVIDED",
+    }
   },
 };
