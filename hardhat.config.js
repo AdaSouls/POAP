@@ -36,7 +36,7 @@ module.exports = {
     mainnet: {
       url: "https://rpc-mainnet-cardano-evm.c1.milkomeda.com",
       chainId: 2001,
-      gasPrice: 30000000000,
+      gasPrice: 70000000000,
       accounts: { mnemonic: `${MNEMONIC_MAINNET}` },
     },
   },

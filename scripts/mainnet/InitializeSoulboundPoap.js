@@ -1,13 +1,12 @@
 const hre = require("hardhat");
-const { BigNumber } = require("ethers");
 
 async function main() {
-    const Poap = await hre.ethers.getContractFactory("Poap");
-    const poap = Poap.attach(
-        "0xd4CE16B9EF9DcB76F3cAEf9a5875E9F461E364de"
+    const SoulboundPoap = await hre.ethers.getContractFactory("SoulboundPoap");
+    const soulboundPoap = SoulboundPoap.attach(
+        "0x4d89cE182A330b22D85FCc29c9daC198739203Fb"
     );
 
-    const initializeTx = await poap["initialize(string,address[])"](
+    const initializeTx = await soulboundPoap["initialize(string,address[])"](
         "https://api.adasouls.io/metadata/",
         []
     );
