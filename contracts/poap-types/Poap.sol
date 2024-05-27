@@ -31,9 +31,20 @@ contract Poap is
     // Events
     event IssuerCreated(uint256 indexed issuerId);
     event EventCreated(uint256 indexed issuerId, uint256 indexed eventId);
-    event EventToken(uint256 indexed eventId, uint256 tokenId);
-    event Frozen(uint256 id);
-    event Unfrozen(uint256 id);
+    event TokenMinted(
+        uint256 indexed issuerId,
+        uint256 indexed eventId,
+        uint256 tokenId,
+        string initialData
+    );
+    event TokenUpdated(
+        uint256 indexed issuerId,
+        uint256 indexed eventId,
+        uint256 tokenId,
+        string initialData
+    );
+    event TokenFrozen(uint256 id);
+    event TokenUnfrozen(uint256 id);
 
     // Base token URI
     string private ___baseURI;
@@ -57,7 +68,7 @@ contract Poap is
     mapping(uint256 => uint256[]) private _issuerEvents;
 
     // Issuer holders list
-    mapping(address => mapping(uint256 => bool)) private _issuerHolders;
+    mapping(address => mapping(uint256 => uint256)) private _issuerHolders;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
@@ -158,7 +169,7 @@ contract Poap is
         );
         uint256 eventId = _tokenEvent[tokenId];
         uint256 issuerId = _eventIssuer[eventId];
-        _issuerHolders[to][issuerId] = false;
+        _issuerHolders[to][issuerId] = 0;
         super.transferFrom(from, to, tokenId);
     }
 
@@ -188,7 +199,7 @@ contract Poap is
     {
         uint256 eventId = _tokenEvent[tokenId];
         uint256 issuerId = _eventIssuer[eventId];
-        _issuerHolders[to][issuerId] = false;
+        _issuerHolders[to][issuerId] = 0;
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -323,7 +334,7 @@ contract Poap is
         address minter,
         uint256 issuerId
     ) public view returns (bool) {
-        return _issuerHolders[minter][issuerId];
+        return _issuerHolders[minter][issuerId] != 0;
     }
 
     /*
@@ -386,11 +397,21 @@ contract Poap is
             _eventTotalSupply[eventId] < _eventMaxSupply[eventId],
             "Poap: max supply reached for event"
         );
-        uint256 tokenId = PoapStateful.mint(to, initialData);
-        _tokenEvent[tokenId] = eventId;
+
+        uint256 tokenId;
+
+        if (isMinterIssuerHolder(to, issuerId)) {
+            tokenId = _issuerHolders[to][issuerId];
+            emit TokenUpdated(issuerId, eventId, tokenId, initialData);
+        } else {
+            tokenId = PoapStateful.mint(to, initialData);
+            _tokenEvent[tokenId] = eventId;
+            _issuerHolders[to][issuerId] = tokenId;
+            emit TokenMinted(issuerId, eventId, tokenId, initialData);
+        }
+
         _eventTotalSupply[eventId]++;
-        _issuerHolders[to][issuerId] = true;
-        emit EventToken(eventId, tokenId);
+
         return tokenId;
     }
 
@@ -483,7 +504,7 @@ contract Poap is
      */
     function _freeze(uint256 tokenId) internal {
         _tokenFrozen[tokenId] = block.timestamp + freezeDuration;
-        emit Frozen(tokenId);
+        emit TokenFrozen(tokenId);
     }
 
     /*
@@ -492,7 +513,7 @@ contract Poap is
      */
     function _unfreeze(uint256 tokenId) internal {
         delete _tokenFrozen[tokenId];
-        emit Unfrozen(tokenId);
+        emit TokenUnfrozen(tokenId);
     }
 
     // The following functions are overrides required by Solidity.
