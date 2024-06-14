@@ -29,22 +29,29 @@ contract Poap is
     PoapStateful
 {
     // Events
-    event IssuerCreated(uint256 indexed issuerId);
-    event EventCreated(uint256 indexed issuerId, uint256 indexed eventId);
+    event IssuerCreated(uint256 issuerId, address issuerAddress);
+    event EventCreated(
+        uint256 issuerId,
+        uint256 eventId,
+        uint256 eventMaxSupply,
+        uint256 eventMintExpiration,
+        address eventOrganizer,
+        bytes32 eventData
+    );
     event TokenMinted(
-        uint256 indexed issuerId,
-        uint256 indexed eventId,
+        uint256 issuerId,
+        uint256 eventId,
         uint256 tokenId,
         string initialData
     );
     event TokenUpdated(
-        uint256 indexed issuerId,
-        uint256 indexed eventId,
+        uint256 issuerId,
+        uint256 eventId,
         uint256 tokenId,
         string initialData
     );
-    event TokenFrozen(uint256 id);
-    event TokenUnfrozen(uint256 id);
+    event TokenFrozen(uint256 tokenId);
+    event TokenUnfrozen(uint256 tokenId);
 
     // Base token URI
     string private ___baseURI;
@@ -69,6 +76,9 @@ contract Poap is
 
     // Issuer holders list
     mapping(address => mapping(uint256 => uint256)) private _issuerHolders;
+
+    // Event holders list
+    mapping(address => mapping(uint256 => bool)) private _eventHolders;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
@@ -170,6 +180,7 @@ contract Poap is
         uint256 eventId = _tokenEvent[tokenId];
         uint256 issuerId = _eventIssuer[eventId];
         _issuerHolders[to][issuerId] = 0;
+        _eventHolders[to][eventId] = false;
         super.transferFrom(from, to, tokenId);
     }
 
@@ -200,6 +211,7 @@ contract Poap is
         uint256 eventId = _tokenEvent[tokenId];
         uint256 issuerId = _eventIssuer[eventId];
         _issuerHolders[to][issuerId] = 0;
+        _eventHolders[to][eventId] = false;
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -231,7 +243,8 @@ contract Poap is
         uint256 eventId,
         uint256 maxSupply,
         uint256 mintExpiration,
-        address eventOrganizer
+        address eventOrganizer,
+        bytes32 eventData
     ) public whenNotPaused onlyAdmin returns (bool) {
         require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
         if (mintExpiration > 0) {
@@ -241,7 +254,7 @@ contract Poap is
             );
         }
         if (_issuerEvents[issuerId].length == 0) {
-            emit IssuerCreated(issuerId);
+            emit IssuerCreated(issuerId, eventOrganizer);
         }
         if (maxSupply == 0) {
             _eventMaxSupply[eventId] = type(uint256).max;
@@ -253,7 +266,14 @@ contract Poap is
         PoapStateful.setMinter(eventOrganizer);
         _issuerEvents[issuerId].push(eventId);
         _eventIssuer[eventId] = issuerId;
-        emit EventCreated(issuerId, eventId);
+        emit EventCreated(
+            issuerId,
+            eventId,
+            _eventMaxSupply[eventId],
+            _eventMintExpiration[eventId],
+            eventOrganizer,
+            eventData
+        );
         return true;
     }
 
@@ -337,6 +357,13 @@ contract Poap is
         return _issuerHolders[minter][issuerId] != 0;
     }
 
+    function isMinterEventHolder(
+        address minter,
+        uint256 eventId
+    ) public view returns (bool) {
+        return _eventHolders[minter][eventId];
+    }
+
     /*
      * @dev Burns a specific ERC721 token.
      * @param tokenId uint256 id of the ERC721 token to be burned.
@@ -381,7 +408,8 @@ contract Poap is
         address to,
         string calldata initialData
     ) internal returns (uint256) {
-        // TODO Verify that the token receiver ('to') do not have already a token for the event ('eventId')
+        require(!isMinterEventHolder(to, eventId), "Poap: minter already has");
+
         require(
             _issuerEvents[issuerId].length > 0,
             "Poap: issuer does not exist"
@@ -407,6 +435,7 @@ contract Poap is
             tokenId = PoapStateful.mint(to, initialData);
             _tokenEvent[tokenId] = eventId;
             _issuerHolders[to][issuerId] = tokenId;
+            _eventHolders[to][eventId] = true;
             emit TokenMinted(issuerId, eventId, tokenId, initialData);
         }
 
