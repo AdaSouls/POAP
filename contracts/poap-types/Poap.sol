@@ -35,8 +35,7 @@ contract Poap is
         uint256 eventId,
         uint256 eventMaxSupply,
         uint256 eventMintExpiration,
-        address eventOrganizer,
-        bytes32 eventData
+        address eventOrganizer
     );
     event TokenMinted(
         uint256 issuerId,
@@ -243,8 +242,7 @@ contract Poap is
         uint256 eventId,
         uint256 maxSupply,
         uint256 mintExpiration,
-        address eventOrganizer,
-        bytes32 eventData
+        address eventOrganizer
     ) public whenNotPaused onlyAdmin returns (bool) {
         require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
         if (mintExpiration > 0) {
@@ -271,8 +269,7 @@ contract Poap is
             eventId,
             _eventMaxSupply[eventId],
             _eventMintExpiration[eventId],
-            eventOrganizer,
-            eventData
+            eventOrganizer
         );
         return true;
     }
