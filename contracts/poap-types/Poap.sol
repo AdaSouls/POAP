@@ -405,7 +405,10 @@ contract Poap is
         address to,
         string calldata initialData
     ) internal returns (uint256) {
-        require(!isMinterEventHolder(to, eventId), "Poap: minter already has");
+        require(
+            !isMinterEventHolder(to, eventId),
+            "Poap: minter is event holder"
+        );
 
         require(
             _issuerEvents[issuerId].length > 0,
