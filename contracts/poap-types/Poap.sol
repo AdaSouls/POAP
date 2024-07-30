@@ -267,7 +267,7 @@ contract Poap is
         emit EventCreated(
             issuerId,
             eventId,
-            _eventMaxSupply[eventId],
+            maxSupply,
             _eventMintExpiration[eventId],
             eventOrganizer
         );
