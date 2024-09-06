@@ -91,7 +91,7 @@ contract PoapStateful is ERC165, ERC721, Ownable {
     /// Emits the `Minted` event.
     function mint(
         address _to,
-        string calldata initialData
+        string memory initialData
     ) public canMint returns (uint256) {
         //require(maxSupply > _totalSupply, "PoapStateful: max supply reached");
         require(_to != address(0), "PoapStateful: zero receiver address");
