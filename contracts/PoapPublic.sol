@@ -250,8 +250,6 @@ contract PoapPublic is
             _eventMaxSupply[eventId] = maxSupply;
         }
         _eventMintExpiration[eventId] = mintExpiration;
-        addEventMinter(eventId, eventOrganizer);
-        PoapStatefulPublic.setMinter(eventOrganizer);
         _issuerEvents[issuerId].push(eventId);
         _eventIssuer[eventId] = issuerId;
         emit EventCreated(
@@ -274,7 +272,7 @@ contract PoapPublic is
         uint256 issuerId,
         uint256 eventId,
         address to
-    ) public whenNotPaused onlyEventMinter(eventId) returns (uint256) {
+    ) public whenNotPaused returns (uint256) {
         return _mintToken(issuerId, eventId, to);
     }
 
@@ -288,7 +286,7 @@ contract PoapPublic is
         uint256 issuerId,
         uint256 eventId,
         address[] memory to
-    ) public whenNotPaused onlyEventMinter(eventId) returns (bool) {
+    ) public whenNotPaused returns (bool) {
         for (uint256 i = 0; i < to.length; ++i) {
             _mintToken(issuerId, eventId, to[i]);
         }

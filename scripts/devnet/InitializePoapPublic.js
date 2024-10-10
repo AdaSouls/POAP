@@ -3,7 +3,7 @@ const hre = require("hardhat");
 async function main() {
   const PoapPublic = await hre.ethers.getContractFactory("PoapPublic");
   const poapPublic = PoapPublic.attach(
-    "0x0a835ac5be03f62f659e96082c852ac6a9eac98b"
+    "0x5Dfcba2533871ac997Eaa70a69AEEF209558964c"
   );
 
   const initializeTx = await poapPublic["initialize(string,address[])"](

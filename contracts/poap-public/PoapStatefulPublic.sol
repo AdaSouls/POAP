@@ -92,7 +92,7 @@ contract PoapStatefulPublic is ERC165, ERC721, Ownable {
     function mint(
         address _to,
         string memory initialData
-    ) public canMint returns (uint256) {
+    ) public returns (uint256) {
         //require(maxSupply > _totalSupply, "PoapStateful: max supply reached");
         require(_to != address(0), "PoapStateful: zero receiver address");
 
