@@ -40,3 +40,40 @@ npx hardhat test
     nvm use 20.9.0
     npm install
     ```
+
+## 🧾 POAP Types
+
+Our smart contract suite supports **four types of POAPs**, each with its own minting and transfer behavior:
+
+| Type                        | Description                                                                 | Transferable | Requires Admin to Mint |
+|-----------------------------|-----------------------------------------------------------------------------|--------------|-------------------------|
+| `Public POAP`              | Anyone can mint, great for open events                                      | ✅            | ❌                      |
+| `Restricted POAP` (Default)| Only event organizers can mint on behalf of users                          | ✅            | ✅                      |
+| `Soulbound POAP`           | Non-transferable token, attached to wallet forever                         | ❌            | ✅                      |
+| `Consensual Soulbound POAP`| Soulbound token with revocation protection. Cannot be burned arbitrarily   | ❌            | ✅                      |
+
+These types are implemented as separate smart contracts inheriting common functionality, promoting modularity and maintainability.
+
+## 🧠 Contract: Standard POAP
+
+The standard `Poap` contract implements the following:
+
+### ✅ Features
+- ✅ ERC721, Metadata & Enumerable extensions
+- ✅ Admin roles and event organizers
+- ✅ Stateful logic via `PoapStateful`
+- ✅ Pausing support via `PoapPausable`
+- ✅ Minting by event
+- ✅ Mint expiration and max supply controls
+- ✅ Batch minting to many users or across multiple events
+- ✅ Role-based access to admin and minters
+- ✅ Freezing/unfreezing logic for token transfers
+
+### ⚙️ Functions
+- `createEventId(...)`: Define new events with metadata and minting rules
+- `mintToken(...)`: Mint a token to a user
+- `mintEventToManyUsers(...)`: Batch mint POAPs for a single event
+- `mintUserToManyEvents(...)`: Batch mint POAPs across multiple events
+- `burn(...)`: Allows users to burn their own tokens
+- `pause()` / `unpause()`: Admin control to stop all interactions
+- `tokenEvent(tokenId)`: Get the event ID for a specific token
