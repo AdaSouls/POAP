@@ -43,36 +43,39 @@ contract Poap is
     event TokenUnfrozen(uint256 tokenId);
 
     // Base token URI
-    string private ___baseURI;
+    string public ___baseURI;
 
     // Total supply for each EventId
-    mapping(uint256 => uint256) private _eventTotalSupply;
+    mapping(uint256 => uint256) public _eventTotalSupply;
 
     // Max supply for each EventId
-    mapping(uint256 => uint256) private _eventMaxSupply;
+    mapping(uint256 => uint256) public _eventMaxSupply;
 
     // Mint expiration timestamp for each EventId
-    mapping(uint256 => uint256) private _eventMintExpiration;
+    mapping(uint256 => uint256) public _eventMintExpiration;
 
     // EventId for each token
-    mapping(uint256 => uint256) private _tokenEvent;
+    mapping(uint256 => uint256) public _tokenEvent;
 
     // IssuerId for each event
-    mapping(uint256 => uint256) private _eventIssuer;
+    mapping(uint256 => uint256) public _eventIssuer;
 
     // EventId list for each issuer
-    mapping(uint256 => uint256[]) private _issuerEvents;
+    mapping(uint256 => uint256[]) public _issuerEvents;
 
     // Issuer holders list
-    mapping(address => mapping(uint256 => uint256)) private _issuerHolders;
+    mapping(address => mapping(uint256 => uint256)) public _issuerHolders;
 
     // Event holders list
-    mapping(address => mapping(uint256 => bool)) private _eventHolders;
+    mapping(address => mapping(uint256 => bool)) public _eventHolders;
+
+    // Issuers: from address to ID
+    mapping(address => uint256) public _issuersById;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
     // Frozen time for each token in seconds
-    mapping(uint256 => uint256) private _tokenFrozen;
+    mapping(uint256 => uint256) public _tokenFrozen;
 
     // Frozen time for a token
     uint256 public freezeDuration;
@@ -254,6 +257,7 @@ contract Poap is
         PoapStateful.setMinter(eventOrganizer);
         _issuerEvents[issuerId].push(eventId);
         _eventIssuer[eventId] = issuerId;
+        _issuersById[eventOrganizer] = issuerId;
         emit EventCreated(
             issuerId,
             eventId,
@@ -332,6 +336,10 @@ contract Poap is
         uint256 issuerId
     ) public view returns (uint256[] memory) {
         return _issuerEvents[issuerId];
+    }
+
+    function getIssuerId(address issuer) public view returns (uint256) {
+        return _issuersById[issuer];
     }
 
     function isMinterIssuerHolder(

@@ -3,24 +3,24 @@ const hre = require("hardhat");
 async function main() {
 
     // Game Data Manager
-    const Poap = await hre.ethers.getContractFactory("Poap");
-    const poap = await Poap.deploy("AdaSouls DevNet POAP", "TPOAP", "0x209b0C25745FEA2E9D99F65dF0949afCef281d55");
+    const PoapPublic = await hre.ethers.getContractFactory("PoapPublic");
+    const poapPublic = await Poap.deploy("Test AdaSouls POAP", "TPOAP", "0xfe02781cc0fe76Bfd2D211430bfa97D2889fd853");
 
-    await poap.waitForDeployment();
+    await PoapPublic.waitForDeployment();
 
     // Verify the contracts after deploying
     await hre.run("verify:verify", {
-        address: await poap.getAddress(),
+        address: await poapPublic.getAddress(),
         constructorArguments: [
-            "AdaSouls DevNet POAP", 
+            "Test AdaSouls POAP", 
             "TPOAP", 
-            "0x209b0C25745FEA2E9D99F65dF0949afCef281d55"
+            "0xfe02781cc0fe76Bfd2D211430bfa97D2889fd853"
         ],
     });
 
     // Smart Contract Address
     console.log(
-        `Poap Contract deployed to ${await poap.getAddress()}`
+        `PoapPublic Contract deployed to ${await poapPublic.getAddress()}`
     );
 
 }

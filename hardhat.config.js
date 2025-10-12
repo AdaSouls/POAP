@@ -28,18 +28,6 @@ module.exports = {
       timeout: 1800000,
       accounts: { mnemonic: `${MNEMONIC_DEVNET}` },
     },
-    devnet: {
-      url: "https://rpc-devnet-cardano-evm.c1.milkomeda.com",
-      chainId: 200101,
-      gasPrice: 70000000000,
-      accounts: { mnemonic: `${MNEMONIC_DEVNET}` },
-    },
-    mainnet: {
-      url: "https://rpc-mainnet-cardano-evm.c1.milkomeda.com",
-      chainId: 2001,
-      gasPrice: 70000000000,
-      accounts: { mnemonic: `${MNEMONIC_MAINNET}` },
-    },
     amoy: {
       url: "https://polygon-amoy.infura.io/v3/d7bf219eb0e1429ca0066ef1734ee1e7",
       chainId: 80002,
@@ -50,22 +38,6 @@ module.exports = {
   etherscan: {
     customChains: [
       {
-        network: "milkomeda-c1-devnet",
-        chainId: 200101,
-        urls: {
-          apiURL: "https://explorer-devnet-cardano-evm.c1.milkomeda.com/api",
-          browserURL: "https://explorer-devnet-cardano-evm.c1.milkomeda.com",
-        },
-      },
-      {
-        network: "milkomeda-c1-mainnet",
-        chainId: 2001,
-        urls: {
-          apiURL: "https://explorer-mainnet-cardano-evm.c1.milkomeda.com/api",
-          browserURL: "https://explorer-mainnet-cardano-evm.c1.milkomeda.com",
-        },
-      },
-      {
         network: "polygonAmoy",
         chainId: 80002,
         urls: {
@@ -75,8 +47,6 @@ module.exports = {
       },
     ],
     apiKey: {
-      "milkomeda-c1-devnet": "NO_API_KEY_PROVIDED",
-      "milkomeda-c1-mainnet": "NO_API_KEY_PROVIDED",
       polygonAmoy: `${POLYGONSCAN_API}`,
     },
   },

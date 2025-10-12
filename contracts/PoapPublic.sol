@@ -43,36 +43,39 @@ contract PoapPublic is
     event TokenUnfrozen(uint256 tokenId);
 
     // Base token URI
-    string private ___baseURI;
+    string public ___baseURI;
 
     // Total supply for each EventId
-    mapping(uint256 => uint256) private _eventTotalSupply;
+    mapping(uint256 => uint256) public eventTotalSupply;
 
     // Max supply for each EventId
-    mapping(uint256 => uint256) private _eventMaxSupply;
+    mapping(uint256 => uint256) public eventMaxSupply;
 
     // Mint expiration timestamp for each EventId
-    mapping(uint256 => uint256) private _eventMintExpiration;
+    mapping(uint256 => uint256) public eventMintExpiration;
 
     // EventId for each token
-    mapping(uint256 => uint256) private _tokenEvent;
+    mapping(uint256 => uint256) public tokenEvent;
 
     // IssuerId for each event
-    mapping(uint256 => uint256) private _eventIssuer;
+    mapping(uint256 => uint256) public eventIssuer;
 
     // EventId list for each issuer
-    mapping(uint256 => uint256[]) private _issuerEvents;
+    mapping(uint256 => uint256[]) public issuerEvents;
 
     // Issuer holders list
-    mapping(address => mapping(uint256 => uint256)) private _issuerHolders;
+    mapping(address => mapping(uint256 => uint256)) public issuerHolders;
 
     // Event holders list
-    mapping(address => mapping(uint256 => bool)) private _eventHolders;
+    mapping(address => mapping(uint256 => bool)) public eventHolders;
+
+    // Issuers: from address to ID
+    mapping(address => uint256) public issuersById;
 
     bytes4 private constant INTERFACE_ID_ERC721_METADATA = 0x5b5e139f;
 
     // Frozen time for each token in seconds
-    mapping(uint256 => uint256) private _tokenFrozen;
+    mapping(uint256 => uint256) public tokenFrozen;
 
     // Frozen time for a token
     uint256 public freezeDuration;
@@ -100,12 +103,6 @@ contract PoapPublic is
         setBaseURI(__baseURI);
     }
 
-    /// @dev Gets the event ID for a given token ID.
-    /// @param tokenId Token ID.
-    function tokenEvent(uint256 tokenId) public view returns (uint256) {
-        return _tokenEvent[tokenId];
-    }
-
     /// @dev Gets the token ID at a given index of the tokens list of the requested owner
     /// @param owner address owning the tokens list to be accessed
     /// @param index uint256 representing the index to be accessed of the requested tokens list
@@ -116,7 +113,7 @@ contract PoapPublic is
         uint256 index
     ) public view returns (uint256 tokenId, uint256 eventId) {
         tokenId = tokenOfOwnerByIndex(owner, index);
-        eventId = tokenEvent(tokenId);
+        eventId = tokenEvent[tokenId];
     }
 
     /*
@@ -126,7 +123,7 @@ contract PoapPublic is
     function tokenURI(
         uint256 tokenId
     ) public view override(PoapStatefulPublic, ERC721) returns (string memory) {
-        uint eventId = _tokenEvent[tokenId];
+        uint eventId = tokenEvent[tokenId];
         return
             string.concat(
                 ___baseURI,
@@ -164,12 +161,12 @@ contract PoapPublic is
     ) public override(ERC721, IERC721) whenNotPaused whenNotFrozen(tokenId) {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
-            "Poap: not authorized to transfer"
+            "PoapPublic: not authorized to transfer"
         );
-        uint256 eventId = _tokenEvent[tokenId];
-        uint256 issuerId = _eventIssuer[eventId];
-        _issuerHolders[to][issuerId] = 0;
-        _eventHolders[to][eventId] = false;
+        uint256 eventId = tokenEvent[tokenId];
+        uint256 issuerId = eventIssuer[eventId];
+        issuerHolders[to][issuerId] = 0;
+        eventHolders[to][eventId] = false;
         super.transferFrom(from, to, tokenId);
     }
 
@@ -197,10 +194,10 @@ contract PoapPublic is
         whenNotPaused
         whenNotFrozen(tokenId)
     {
-        uint256 eventId = _tokenEvent[tokenId];
-        uint256 issuerId = _eventIssuer[eventId];
-        _issuerHolders[to][issuerId] = 0;
-        _eventHolders[to][eventId] = false;
+        uint256 eventId = tokenEvent[tokenId];
+        uint256 issuerId = eventIssuer[eventId];
+        issuerHolders[to][issuerId] = 0;
+        eventHolders[to][eventId] = false;
         super.safeTransferFrom(from, to, tokenId, _data);
     }
 
@@ -234,29 +231,33 @@ contract PoapPublic is
         uint256 mintExpiration,
         address eventOrganizer
     ) public whenNotPaused returns (bool) {
-        require(_eventMaxSupply[eventId] == 0, "Poap: event already created");
+        require(
+            eventMaxSupply[eventId] == 0,
+            "PoapPublic: event already created"
+        );
         if (mintExpiration > 0) {
             require(
                 mintExpiration > block.timestamp + 3 days,
-                "Poap: mint expiration must be higher than current timestamp plus 3 days"
+                "PoapPublic: mint expiration must be higher than current timestamp plus 3 days"
             );
         }
-        if (_issuerEvents[issuerId].length == 0) {
+        if (issuerEvents[issuerId].length == 0) {
             emit IssuerCreated(issuerId, eventOrganizer);
         }
         if (maxSupply == 0) {
-            _eventMaxSupply[eventId] = type(uint256).max;
+            eventMaxSupply[eventId] = type(uint256).max;
         } else {
-            _eventMaxSupply[eventId] = maxSupply;
+            eventMaxSupply[eventId] = maxSupply;
         }
-        _eventMintExpiration[eventId] = mintExpiration;
-        _issuerEvents[issuerId].push(eventId);
-        _eventIssuer[eventId] = issuerId;
+        eventMintExpiration[eventId] = mintExpiration;
+        issuerEvents[issuerId].push(eventId);
+        eventIssuer[eventId] = issuerId;
+        issuersById[eventOrganizer] = issuerId;
         emit EventCreated(
             issuerId,
             eventId,
             maxSupply,
-            _eventMintExpiration[eventId],
+            eventMintExpiration[eventId],
             eventOrganizer
         );
         return true;
@@ -310,40 +311,18 @@ contract PoapPublic is
         return true;
     }
 
-    function getEventMaxSupply(uint256 eventId) public view returns (uint256) {
-        return _eventMaxSupply[eventId];
-    }
-
-    function getEventTotalSupply(
-        uint256 eventId
-    ) public view returns (uint256) {
-        return _eventTotalSupply[eventId];
-    }
-
-    function getEventMintExpiration(
-        uint256 eventId
-    ) public view returns (uint256) {
-        return _eventMintExpiration[eventId];
-    }
-
-    function getIssuerEventList(
-        uint256 issuerId
-    ) public view returns (uint256[] memory) {
-        return _issuerEvents[issuerId];
-    }
-
     function isMinterIssuerHolder(
         address minter,
         uint256 issuerId
     ) public view returns (bool) {
-        return _issuerHolders[minter][issuerId] != 0;
+        return issuerHolders[minter][issuerId] != 0;
     }
 
     function isMinterEventHolder(
         address minter,
         uint256 eventId
     ) public view returns (bool) {
-        return _eventHolders[minter][eventId];
+        return eventHolders[minter][eventId];
     }
 
     /*
@@ -353,7 +332,7 @@ contract PoapPublic is
     function burn(uint256 tokenId) public override {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId),
-            "Poap: not authorized to burn"
+            "PoapPublic: not authorized to burn"
         );
         __burn(tokenId);
     }
@@ -368,13 +347,13 @@ contract PoapPublic is
     function __burn(uint256 tokenId) internal {
         super._burn(tokenId);
 
-        uint256 eventId = _tokenEvent[tokenId];
-        _eventTotalSupply[eventId]--;
+        uint256 eventId = tokenEvent[tokenId];
+        eventTotalSupply[eventId]--;
         _totalSupply--;
-        delete _tokenEvent[tokenId];
-        // TODO: remove the owner as a holder of this issuer
+        delete tokenEvent[tokenId];
+        //**/ TO DO: remove holder from that issuer
         //uint256 issuerId = _eventIssuer[eventId];
-        //_issuerHolders[to][issuerId] = false;
+        //issuerHolders[to][issuerId] = false;
     }
 
     /*
@@ -391,39 +370,42 @@ contract PoapPublic is
     ) internal returns (uint256) {
         require(
             !isMinterEventHolder(to, eventId),
-            "Poap: minter is event holder"
+            "PoapPublic: minter is event holder"
         );
 
         require(
-            _issuerEvents[issuerId].length > 0,
-            "Poap: issuer does not exist"
+            issuerEvents[issuerId].length > 0,
+            "PoapPublic: issuer does not exist"
         );
-        require(_eventMaxSupply[eventId] != 0, "Poap: event does not exist");
-        if (_eventMintExpiration[eventId] > 0) {
+        require(
+            eventMaxSupply[eventId] != 0,
+            "PoapPublic: event does not exist"
+        );
+        if (eventMintExpiration[eventId] > 0) {
             require(
-                _eventMintExpiration[eventId] >= block.timestamp,
-                "Poap: event mint has expired"
+                eventMintExpiration[eventId] >= block.timestamp,
+                "PoapPublic: event mint has expired"
             );
         }
         require(
-            _eventTotalSupply[eventId] < _eventMaxSupply[eventId],
-            "Poap: max supply reached for event"
+            eventTotalSupply[eventId] < eventMaxSupply[eventId],
+            "PoapPublic: max supply reached for event"
         );
 
         uint256 tokenId;
 
         if (isMinterIssuerHolder(to, issuerId)) {
-            tokenId = _issuerHolders[to][issuerId];
+            tokenId = issuerHolders[to][issuerId];
             emit TokenUpdated(issuerId, eventId, tokenId);
         } else {
             tokenId = PoapStatefulPublic.mint(to, "");
-            _tokenEvent[tokenId] = eventId;
-            _issuerHolders[to][issuerId] = tokenId;
-            _eventHolders[to][eventId] = true;
+            tokenEvent[tokenId] = eventId;
+            issuerHolders[to][issuerId] = tokenId;
+            eventHolders[to][eventId] = true;
             emit TokenMinted(issuerId, eventId, tokenId);
         }
 
-        _eventTotalSupply[eventId]++;
+        eventTotalSupply[eventId]++;
 
         return tokenId;
     }
@@ -438,7 +420,7 @@ contract PoapPublic is
      * @return uint256 representing the token freeze time
      */
     function getFreezeTime(uint256 tokenId) public view returns (uint256) {
-        return _tokenFrozen[tokenId];
+        return tokenFrozen[tokenId];
     }
 
     /*
@@ -447,7 +429,7 @@ contract PoapPublic is
      * @return bool representing the token freeze status
      */
     function isFrozen(uint256 tokenId) external view returns (bool) {
-        return _tokenFrozen[tokenId] >= block.timestamp;
+        return tokenFrozen[tokenId] >= block.timestamp;
     }
 
     /*
@@ -455,7 +437,7 @@ contract PoapPublic is
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenNotFrozen(uint256 tokenId) {
-        require(!this.isFrozen(tokenId), "Poap: token is frozen");
+        require(!this.isFrozen(tokenId), "PoapPublic: token is frozen");
         _;
     }
 
@@ -464,7 +446,7 @@ contract PoapPublic is
      * @param tokenId ( uint256 ) The token id to check.
      */
     modifier whenFrozen(uint256 tokenId) {
-        require(this.isFrozen(tokenId), "Poap: token is not frozen");
+        require(this.isFrozen(tokenId), "PoapPublic: token is not frozen");
         _;
     }
 
@@ -492,7 +474,7 @@ contract PoapPublic is
     ) public whenNotPaused whenNotFrozen(tokenId) {
         require(
             _isApprovedOrOwner(_msgSender(), tokenId) || isAdmin(_msgSender()),
-            "Poap: not authorized to freeze"
+            "PoapPublic: not authorized to freeze"
         );
         _freeze(tokenId);
     }
@@ -516,7 +498,7 @@ contract PoapPublic is
      * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
      */
     function _freeze(uint256 tokenId) internal {
-        _tokenFrozen[tokenId] = block.timestamp + freezeDuration;
+        tokenFrozen[tokenId] = block.timestamp + freezeDuration;
         emit TokenFrozen(tokenId);
     }
 
@@ -525,7 +507,7 @@ contract PoapPublic is
      * @param tokenId ( uint256 ) Id of the token being frozen by the msg.sender
      */
     function _unfreeze(uint256 tokenId) internal {
-        delete _tokenFrozen[tokenId];
+        delete tokenFrozen[tokenId];
         emit TokenUnfrozen(tokenId);
     }
 
