@@ -231,6 +231,7 @@ contract PoapPublic is
         uint256 mintExpiration,
         address eventOrganizer
     ) public whenNotPaused returns (bool) {
+        require(issuerId != 0, "PoapPublic: issuerId can't be 0");
         require(
             eventMaxSupply[eventId] == 0,
             "PoapPublic: event already created"

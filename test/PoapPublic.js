@@ -135,7 +135,7 @@ describe("Public Poap Contract", function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
 
-                await expect(poapToken.connect(addr1).createEventId(0, 0, 100, 0, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.connect(addr1).createEventId(1, 0, 100, 0, addr2.address)).to.be.fulfilled;
                 
                 await expect(poapToken.createEventId(1, 1, 100, 0, addr2.address)).to.be.fulfilled;
     
@@ -176,6 +176,18 @@ describe("Public Poap Contract", function () {
                 await expect(poapToken.createEventId(1, 1, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.createEventId(2, 0, 100, latest, addr2.address)).to.be.revertedWith("PoapPublic: mint expiration must be higher than current timestamp plus 3 days");
+
+            });
+
+            it("Should not allow the creation of events with issuer id = 0", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                const latest = await time.latest();
+
+                await expect(poapToken.createEventId(0, 1, 100, latestPlusSevenDays, addr1.address)).to.be.revertedWith("PoapPublic: issuerId can't be 0");
 
             });
 

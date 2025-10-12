@@ -2,13 +2,13 @@ const hre = require("hardhat");
 
 async function main() {
 
-    // Game Data Manager
+    // Get Smart Contract from Blockchain
     const PoapPublic = await hre.ethers.getContractFactory("PoapPublic");
     const poapPublic = PoapPublic.attach(
-        "0xeaFb5fa833Bf35112Bfef885ccB7425233702740"
+        "0x68FF54eCa3C4b71ecE479306F199816f5f4c17d0"
     );
 
-    // Verify the contracts after deploying
+    // Verify the Contract
     await hre.run("verify:verify", {
         address: await poapPublic.getAddress(),
         constructorArguments: [

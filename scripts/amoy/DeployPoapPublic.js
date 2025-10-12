@@ -2,7 +2,7 @@ const hre = require("hardhat");
 
 async function main() {
 
-    // Game Data Manager
+    // PoapPublic Deployment
     const PoapPublic = await hre.ethers.getContractFactory("PoapPublic");
     const poapPublic = await PoapPublic.deploy("Test AdaSouls POAP", "TPOAP", "0xfe02781cc0fe76Bfd2D211430bfa97D2889fd853");
 
