@@ -1,8 +1,8 @@
 require("@nomicfoundation/hardhat-toolbox");
 
 const MNEMONIC_DEVNET = vars.get("MNEMONIC_DEVNET");
-const MNEMONIC_MAINNET = vars.get("MNEMONIC_MAINNET");
-const POLYGONSCAN_API = vars.get("POLYGONSCAN_API");
+const PRIVATE_KEY_AMOY = vars.get("PRIVATE_KEY_AMOY");
+const ETHERSCAN_API_KEY = vars.get("ETHERSCAN_API_KEY");
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
@@ -32,13 +32,16 @@ module.exports = {
       url: "https://polygon-amoy.infura.io/v3/d7bf219eb0e1429ca0066ef1734ee1e7",
       chainId: 80002,
       gasPrice: 30000000000,
-      accounts: { mnemonic: `${MNEMONIC_DEVNET}` },
+      accounts: [
+        `${PRIVATE_KEY_AMOY}`
+      ]
     },
   },
   etherscan: {
+    apiKey: `${ETHERSCAN_API_KEY}`,
     customChains: [
       {
-        network: "polygonAmoy",
+        network: "amoy",
         chainId: 80002,
         urls: {
           apiURL: "https://api-amoy.polygonscan.com/api",
@@ -46,8 +49,6 @@ module.exports = {
         },
       },
     ],
-    apiKey: {
-      polygonAmoy: `${POLYGONSCAN_API}`,
-    },
+
   },
 };

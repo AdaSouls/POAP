@@ -4,19 +4,9 @@ async function main() {
 
     // Game Data Manager
     const PoapPublic = await hre.ethers.getContractFactory("PoapPublic");
-    const poapPublic = await Poap.deploy("Test AdaSouls POAP", "TPOAP", "0xfe02781cc0fe76Bfd2D211430bfa97D2889fd853");
+    const poapPublic = await PoapPublic.deploy("Test AdaSouls POAP", "TPOAP", "0xfe02781cc0fe76Bfd2D211430bfa97D2889fd853");
 
-    await PoapPublic.waitForDeployment();
-
-    // Verify the contracts after deploying
-    await hre.run("verify:verify", {
-        address: await poapPublic.getAddress(),
-        constructorArguments: [
-            "Test AdaSouls POAP", 
-            "TPOAP", 
-            "0xfe02781cc0fe76Bfd2D211430bfa97D2889fd853"
-        ],
-    });
+    await poapPublic.waitForDeployment();
 
     // Smart Contract Address
     console.log(

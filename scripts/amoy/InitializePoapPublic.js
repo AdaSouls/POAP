@@ -3,7 +3,7 @@ const hre = require("hardhat");
 async function main() {
     const PoapPublic = await hre.ethers.getContractFactory("PoapPublic");
     const poapPublic = PoapPublic.attach(
-        "0x8782Ea1ee75e6EdCACFF2c9ED4985Ce76fA228fa"
+        "0xeaFb5fa833Bf35112Bfef885ccB7425233702740"
     );
 
     const initializeTx = await poapPublic["initialize(string,address[])"](
@@ -11,7 +11,7 @@ async function main() {
         []
     );
 
-    console.log("Initialize Tx: ", initializeTx);
+    console.log("Initialize Tx: ", initializeTx.hash);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
