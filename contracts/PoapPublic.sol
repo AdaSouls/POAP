@@ -80,6 +80,9 @@ contract PoapPublic is
     // Frozen time for a token
     uint256 public freezeDuration;
 
+    // Define a custom error
+    error IssuerAlreadyExists(uint256 issuerId, address issuerAddress);
+
     constructor(
         string memory name_,
         string memory symbol_,
@@ -243,7 +246,16 @@ contract PoapPublic is
             );
         }
         if (issuerEvents[issuerId].length == 0) {
-            emit IssuerCreated(issuerId, eventOrganizer);
+            if (issuersById[eventOrganizer] == 0) {
+                emit IssuerCreated(issuerId, eventOrganizer);
+            } else {
+                if (issuersById[eventOrganizer] != issuerId) {
+                    revert IssuerAlreadyExists(
+                        issuersById[eventOrganizer],
+                        eventOrganizer
+                    );
+                }
+            }
         }
         if (maxSupply == 0) {
             eventMaxSupply[eventId] = type(uint256).max;

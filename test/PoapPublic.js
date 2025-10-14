@@ -12,7 +12,7 @@ async function deployPoapFixture() {
     const [owner, addr1, addr2] = await ethers.getSigners();
     const poapFactory = await ethers.getContractFactory("PoapPublic");
     const poapToken = await poapFactory.deploy("Test Poap", "TPOAP", owner.address);
-
+    
     return { poapToken, owner, addr1, addr2 };
 }
 
@@ -191,6 +191,18 @@ describe("Public Poap Contract", function () {
 
             });
 
+            it("Should not allow the creation of events with an organizer address already linked to a different issuer id", async function () {
+    
+                const { poapToken, addr1 } = await loadFixture(deployPoapFixtureAndInitialize);
+
+                const latestPlusSevenDays = await time.latest() + sevenDays;
+
+                await expect(poapToken.createEventId(1, 0, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+
+                await expect(poapToken.createEventId(2, 1, 100, latestPlusSevenDays, addr1.address)).to.be.revertedWithCustomError(poapToken, "IssuerAlreadyExists").withArgs(1, addr1.address);
+
+            });
+
             it("Should allow the creation of events with mint expiration date 3 days from now", async function () {
     
                 const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
@@ -345,13 +357,13 @@ describe("Public Poap Contract", function () {
                 const receipt2 = await mintTx2.wait();
                 const tokenId2 = receipt2.logs.find(log => log.fragment.name === 'TokenMinted').args[2];
                 
-                await expect(poapToken.createEventId(2, 6, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 6, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
                 
-                const mintTx3 = await poapToken.mintToken(2, 6, addr3.address);
+                const mintTx3 = await poapToken.mintToken(1, 6, addr3.address);
                 const receipt3 = await mintTx3.wait();
                 const tokenId3 = receipt3.logs.find(log => log.fragment.name === 'TokenMinted').args[2];
                 
-                const mintTx4 = await poapToken.mintToken(2, 6, addr4.address);
+                const mintTx4 = await poapToken.mintToken(1, 6, addr4.address);
                 const receipt4 = await mintTx4.wait();
                 const tokenId4 = receipt4.logs.find(log => log.fragment.name === 'TokenMinted').args[2];
                 
@@ -373,7 +385,7 @@ describe("Public Poap Contract", function () {
                 await poapToken.mintToken(1, 5, addr1.address);
                 await poapToken.mintToken(1, 5, addr2.address);
 
-                await expect(poapToken.createEventId(2, 6, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 6, 10, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
 
                 await poapToken.mintToken(2, 6, addr1.address);
                 await poapToken.mintToken(2, 6, addr2.address);
@@ -555,16 +567,16 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 2, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 2, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr1.address)).to.be.fulfilled; // admin call
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr1.address)).to.be.fulfilled; // admin call
 
-                await expect(poapToken.connect(addr1).mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr2.address)).to.be.fulfilled; // organiser call
+                await expect(poapToken.connect(addr1).mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr2.address)).to.be.fulfilled; // organiser call
 
-                await expect(poapToken.connect(addr2).mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr3.address)).to.be.fulfilled; // attendee call
+                await expect(poapToken.connect(addr2).mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr3.address)).to.be.fulfilled; // attendee call
 
-                await expect(poapToken.connect(addr4).mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr4.address)).to.be.fulfilled; // public call
+                await expect(poapToken.connect(addr4).mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr4.address)).to.be.fulfilled; // public call
 
             });
 
@@ -575,18 +587,18 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 2, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 2, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr2.address)).to.be.fulfilled;
 
                 await poapToken.pause();
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr3.address)).to.be.reverted;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr3.address)).to.be.reverted;
 
                 await poapToken.unpause();
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr4.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr4.address)).to.be.fulfilled;
 
             });
 
@@ -597,12 +609,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 2, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 2, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr2.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 3], addr3.address)).to.be.revertedWith("PoapPublic: event does not exist");
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 3], addr3.address)).to.be.revertedWith("PoapPublic: event does not exist");
 
             });
 
@@ -614,16 +626,16 @@ describe("Public Poap Contract", function () {
                 const latestPlusEightDays = await time.latest() + eightDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 1, 10, 0, addr2.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 2, 10, 0, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 1, 10, 0, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 2, 10, 0, addr2.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr2.address)).to.be.fulfilled;
 
                 await time.increaseTo(latestPlusEightDays);
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 1, 2], addr3.address)).to.be.revertedWith("PoapPublic: event mint has expired");
-                await expect(poapToken.mintUserToManyEvents([2, 3], [1, 2], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 1, 2], addr3.address)).to.be.revertedWith("PoapPublic: event mint has expired");
+                await expect(poapToken.mintUserToManyEvents([1, 1], [1, 2], addr3.address)).to.be.fulfilled;
 
             });
 
@@ -634,15 +646,15 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 6, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 7, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 8, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 7, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 8, 5, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr3.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr4.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr5.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr6.address)).to.be.revertedWith("PoapPublic: max supply reached for event");
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr4.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr5.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr6.address)).to.be.revertedWith("PoapPublic: max supply reached for event");
 
             });
 
@@ -653,20 +665,20 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 6, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 7, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 8, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 7, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 8, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 expect(await poapToken.eventTotalSupply(6)).to.be.equal(0);
                 expect(await poapToken.eventTotalSupply(7)).to.be.equal(0);
                 expect(await poapToken.eventTotalSupply(8)).to.be.equal(0);
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr1.address)).to.be.fulfilled;
 
                 expect(await poapToken.eventTotalSupply(6)).to.be.equal(1);
                 expect(await poapToken.eventTotalSupply(7)).to.be.equal(1);
                 expect(await poapToken.eventTotalSupply(8)).to.be.equal(1);
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [6, 7, 8], addr2.address)).to.be.fulfilled;
 
                 expect(await poapToken.eventTotalSupply(6)).to.be.equal(2);
                 expect(await poapToken.eventTotalSupply(7)).to.be.equal(2);
@@ -676,13 +688,13 @@ describe("Public Poap Contract", function () {
 
             it("Should emit TokenMinted event", async function () {
     
-                const { poapToken, addr1, addr2 } = await loadFixture(deployPoapFixtureAndInitialize);
+                const { poapToken, addr1, addr2, addr3 } = await loadFixture(deployPoapFixtureAndInitialize);
 
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 6, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 7, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 8, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 7, 10, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 8, 10, latestPlusSevenDays, addr3.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr2.address))
                     .to.emit(poapToken, "TokenMinted").withArgs(1, 6, 1)
@@ -702,12 +714,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, 100, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, 20, latestPlusSevenDays, addr3.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
                 await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([2, 3], [0, 100], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr3.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).eventMaxSupply(0)).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
                 expect(await poapToken.connect(addr2).eventMaxSupply(100)).to.be.equal(100);
@@ -722,12 +734,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 100, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 20, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([2, 3], [100, 20], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 100, 20], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [0, 100], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [100, 20], addr3.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).eventMaxSupply(0)).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
                 expect(await poapToken.connect(addr1).eventMaxSupply(100)).to.be.equal(100);
@@ -742,12 +754,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 0, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 100, 100, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 20, 20, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100],  addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([2, 3], [100, 20], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 100, 20], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [0, 100],  addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [100, 20], addr3.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).eventMaxSupply(0)).to.equal(BigInt(115792089237316195423570985008687907853269984665640564039457584007913129639935n));
                 expect(await poapToken.connect(addr1).eventMaxSupply(100)).to.be.equal(100);
@@ -767,12 +779,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([2, 3], [100, 20], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 100, 20], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [0, 100], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [100, 20], addr3.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).eventTotalSupply(0)).to.be.equal(2);
                 expect(await poapToken.connect(addr2).eventTotalSupply(100)).to.be.equal(3);
@@ -787,12 +799,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([2, 3], [100, 20], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1, 1], [0, 100, 20], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [0, 100], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [100, 20], addr3.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).eventTotalSupply(0)).to.be.equal(2);
                 expect(await poapToken.connect(addr1).eventTotalSupply(100)).to.be.equal(3);
@@ -807,12 +819,12 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr1.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
-                await expect(poapToken.mintUserToManyEvents([2], [100], addr3.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [0, 100], addr1.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1, 1], [0, 100], addr2.address)).to.be.fulfilled;
+                await expect(poapToken.mintUserToManyEvents([1], [100], addr3.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).eventTotalSupply(0)).to.be.equal(2);
                 expect(await poapToken.connect(addr1).eventTotalSupply(100)).to.be.equal(3);
@@ -832,8 +844,8 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr3.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
                 await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
@@ -852,8 +864,8 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr3.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintUserToManyEvents([1, 2, 3], [0, 100, 20], addr1.address)).to.be.fulfilled;
                 await expect(poapToken.mintUserToManyEvents([1, 2], [0, 100], addr2.address)).to.be.fulfilled;
@@ -870,8 +882,8 @@ describe("Public Poap Contract", function () {
                 const latestPlusSevenDays = await time.latest() + sevenDays;
 
                 await expect(poapToken.createEventId(1, 0, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(2, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
-                await expect(poapToken.createEventId(3, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 100, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(1, 20, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 expect(await poapToken.connect(addr1).totalSupply()).to.be.equal(0);
 
@@ -929,7 +941,7 @@ describe("Public Poap Contract", function () {
                 await expect(poapToken.mintToken(1, 0, addr1.address)).to.be.fulfilled;
                 await expect(poapToken.mintToken(1, 0, addr2.address)).to.be.fulfilled;
 
-                await expect(poapToken.createEventId(2, 1, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
+                await expect(poapToken.createEventId(2, 1, 10, latestPlusSevenDays, addr2.address)).to.be.fulfilled;
                 await expect(poapToken.mintToken(2, 1, addr1.address)).to.be.fulfilled;
                 await expect(poapToken.mintToken(2, 1, addr2.address)).to.be.fulfilled;
 
