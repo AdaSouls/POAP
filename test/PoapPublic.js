@@ -425,7 +425,7 @@ describe("Public Poap Contract", function () {
 
                 await expect(poapToken.createEventId(1, 5, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
-                await expect(poapToken.mintToken(1, 5, addr1.address)).to.emit(poapToken, "TokenMinted").withArgs(1, 5, 1);
+                await expect(poapToken.mintToken(1, 5, addr1.address)).to.emit(poapToken, "TokenMinted").withArgs(1, 5, 1, addr1.address);
 
             });
 
@@ -550,9 +550,9 @@ describe("Public Poap Contract", function () {
                 await expect(poapToken.createEventId(1, 5, 10, latestPlusSevenDays, addr1.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintEventToManyUsers(1, 5, [addr1.address, addr2.address, addr3.address]))
-                    .to.emit(poapToken, "TokenMinted").withArgs(1, 5, 1)
-                    .to.emit(poapToken, "TokenMinted").withArgs(1, 5, 2)
-                    .to.emit(poapToken, "TokenMinted").withArgs(1, 5, 3);
+                    .to.emit(poapToken, "TokenMinted").withArgs(1, 5, 1, addr1.address)
+                    .to.emit(poapToken, "TokenMinted").withArgs(1, 5, 2, addr2.address)
+                    .to.emit(poapToken, "TokenMinted").withArgs(1, 5, 3, addr3.address);
 
             });
 
@@ -697,9 +697,9 @@ describe("Public Poap Contract", function () {
                 await expect(poapToken.createEventId(3, 8, 10, latestPlusSevenDays, addr3.address)).to.be.fulfilled;
 
                 await expect(poapToken.mintUserToManyEvents([1, 2, 3], [6, 7, 8], addr2.address))
-                    .to.emit(poapToken, "TokenMinted").withArgs(1, 6, 1)
-                    .to.emit(poapToken, "TokenMinted").withArgs(2, 7, 2)
-                    .to.emit(poapToken, "TokenMinted").withArgs(3, 8, 3);
+                    .to.emit(poapToken, "TokenMinted").withArgs(1, 6, 1, addr2.address)
+                    .to.emit(poapToken, "TokenMinted").withArgs(2, 7, 2, addr2.address)
+                    .to.emit(poapToken, "TokenMinted").withArgs(3, 8, 3, addr2.address);
 
             });
 
