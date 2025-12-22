@@ -34,6 +34,7 @@ contract PoapPublic is
         uint256 issuerId,
         uint256 eventId,
         uint256 eventMaxSupply,
+        uint256 eventStartDate,
         uint256 eventMintExpiration,
         address eventOrganizer
     );
@@ -53,6 +54,9 @@ contract PoapPublic is
 
     // Mint expiration timestamp for each EventId
     mapping(uint256 => uint256) public eventMintExpiration;
+
+    // Start date timestamp for each EventId
+    mapping(uint256 => uint256) public eventStartDate;
 
     // EventId for each token
     mapping(uint256 => uint256) public tokenEvent;
@@ -231,6 +235,7 @@ contract PoapPublic is
         uint256 issuerId,
         uint256 eventId,
         uint256 maxSupply,
+        uint256 startDate,
         uint256 mintExpiration,
         address eventOrganizer
     ) public whenNotPaused returns (bool) {
@@ -239,11 +244,24 @@ contract PoapPublic is
             eventMaxSupply[eventId] == 0,
             "PoapPublic: event already created"
         );
+        if (startDate > 0) {
+            require(
+                startDate >= block.timestamp,
+                "PoapPublic: start date must be in the future or current time"
+            );
+        }
         if (mintExpiration > 0) {
             require(
                 mintExpiration > block.timestamp + 3 days,
                 "PoapPublic: mint expiration must be higher than current timestamp plus 3 days"
             );
+            // Ensure mint expiration is after start date
+            if (startDate > 0) {
+                require(
+                    mintExpiration > startDate,
+                    "PoapPublic: mint expiration must be after start date"
+                );
+            }
         }
         if (issuerEvents[issuerId].length == 0) {
             if (issuersById[eventOrganizer] == 0) {
@@ -262,6 +280,7 @@ contract PoapPublic is
         } else {
             eventMaxSupply[eventId] = maxSupply;
         }
+        eventStartDate[eventId] = startDate;
         eventMintExpiration[eventId] = mintExpiration;
         issuerEvents[issuerId].push(eventId);
         eventIssuer[eventId] = issuerId;
@@ -270,6 +289,7 @@ contract PoapPublic is
             issuerId,
             eventId,
             maxSupply,
+            eventStartDate[eventId],
             eventMintExpiration[eventId],
             eventOrganizer
         );
@@ -394,6 +414,12 @@ contract PoapPublic is
             eventMaxSupply[eventId] != 0,
             "PoapPublic: event does not exist"
         );
+        if (eventStartDate[eventId] > 0) {
+            require(
+                block.timestamp >= eventStartDate[eventId],
+                "PoapPublic: event has not started yet"
+            );
+        }
         if (eventMintExpiration[eventId] > 0) {
             require(
                 eventMintExpiration[eventId] >= block.timestamp,
